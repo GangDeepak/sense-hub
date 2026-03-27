@@ -24,7 +24,7 @@ interface MultiSelectDropdownProps {
   onChange: (selected: string[]) => void;
 }
 
-const MultiSelectDropdown = ({ label, options, domainFilters, onChange }: MultiSelectDropdownProps) => {
+const MultiSelectDropdown = ({ options, domainFilters, onChange }: MultiSelectDropdownProps) => {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [allChecked, setAllChecked] = useState(true);
