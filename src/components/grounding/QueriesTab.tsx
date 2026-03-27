@@ -117,7 +117,6 @@ const SectionContent = ({ label, value }: { label: string; value: unknown }) => 
 
 const QueryItem = ({ d, searchQuery }: { d: QueryRecord; searchQuery: string }) => {
   const [open, setOpen] = useState(false);
-  const uuid = d.query_uuid || d._doc_id || JSON.stringify(d).slice(0, 20);
   const bodyFields = Object.entries(d).filter(([k]) => k !== "user_query");
 
   return (

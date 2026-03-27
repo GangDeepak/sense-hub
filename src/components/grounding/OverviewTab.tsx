@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import type { QueryRecord, KnowledgeRecord } from "./types";
 import { countItems } from "./types";
