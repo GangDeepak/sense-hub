@@ -235,7 +235,7 @@ const QueryDetail = ({ data }: QueryDetailProps) => {
                       </AccordionTrigger>
                       <AccordionContent>
                         {ud.spend_vs_resp && (ud.spend_vs_resp.raw || []).length > 0 ? (
-                          <SpendVsResp svr={ud.spend_vs_resp} userId={ui} />
+                          <SpendVsResp svr={ud.spend_vs_resp} />
                         ) : (
                           <div className="text-center py-4 text-muted-foreground text-xs">Insufficient data</div>
                         )}
