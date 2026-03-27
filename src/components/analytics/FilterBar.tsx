@@ -125,8 +125,6 @@ const FilterBar = ({ onApply }: FilterBarProps) => {
   const [quickRange, setQuickRange] = useState("");
   const [startDate, setStartDate] = useState("2026-03-01");
   const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
-  const [tenants, setTenants] = useState<string[]>([]);
-  const [users, setUsers] = useState<string[]>([]);
   const [tenantOptions, setTenantOptions] = useState<string[]>([]);
   const [userOptions, setUserOptions] = useState<string[]>([]);
   const [selectedTenants, setSelectedTenants] = useState<string[]>([]);

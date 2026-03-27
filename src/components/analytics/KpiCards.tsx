@@ -9,13 +9,6 @@ const KpiCards = ({ data }: KpiCardsProps) => {
   const rt = data.response_time || { median: 0, per_user: { min: 0, median: 0, max: 0 }, per_session: { min: 0, median: 0, max: 0 } };
   const totalRated = (data.overall_accuracy?.[0]?.value || 0) + (data.overall_accuracy?.[1]?.value || 0);
 
-  const colors = [
-    { border: "hsl(var(--primary))", text: "text-primary" },
-    { border: "hsl(217 91% 46%)", text: "text-[hsl(217,91%,46%)]" },
-    { border: "hsl(160 84% 39%)", text: "text-[hsl(160,84%,39%)]" },
-    { border: "hsl(var(--foreground))", text: "text-foreground" },
-  ];
-
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       {/* Total Users */}

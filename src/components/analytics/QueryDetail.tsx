@@ -80,7 +80,7 @@ const StatMini = ({ label, value, unit, color = "text-primary" }: { label: strin
   </div>
 );
 
-const SpendVsResp = ({ svr, userId }: { svr: NonNullable<SenseDevUser["spend_vs_resp"]>; userId: number }) => {
+const SpendVsResp = ({ svr }: { svr: NonNullable<SenseDevUser["spend_vs_resp"]> }) => {
   const ss = svr.spend_stats || { min: 0, median: 0, max: 0 };
   const rs = svr.resp_len_stats || { min: 0, median: 0, max: 0 };
   const sqs = svr.sess_q_stats || { min: 0, median: 0, max: 0 };
