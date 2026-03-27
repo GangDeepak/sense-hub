@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+
 import { ChevronDown, Search, Grid2x2 } from "lucide-react";
 import type { QueryRecord } from "./types";
 
