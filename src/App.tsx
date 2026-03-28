@@ -25,10 +25,12 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+            <Route element={<AppLayout />}>
               <Route path="/" element={<Index />} />
-              <Route path="/chat-analytics" element={<ChatAnalytics />} />
-              <Route path="/grounding-module" element={<GroundingModule />} />
+              <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                <Route path="/chat-analytics" element={<ChatAnalytics />} />
+                <Route path="/grounding-module" element={<GroundingModule />} />
+              </Route>
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
