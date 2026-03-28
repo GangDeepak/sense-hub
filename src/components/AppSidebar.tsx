@@ -33,7 +33,7 @@ export function AppSidebar() {
           <SidebarTrigger className={collapsed ? "mx-auto" : "ml-auto"} />
         </div>
         <SidebarGroup>
-          <SidebarGroupLabel>Sense</SidebarGroupLabel>
+          
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
