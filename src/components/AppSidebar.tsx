@@ -28,8 +28,9 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
-        <div className="flex items-center px-2 py-2">
-          <SidebarTrigger />
+        <div className="flex items-center justify-between px-2 py-2">
+          {!collapsed && <span className="font-semibold text-sm">Sense</span>}
+          <SidebarTrigger className={collapsed ? "mx-auto" : "ml-auto"} />
         </div>
         <SidebarGroup>
           <SidebarGroupLabel>Sense</SidebarGroupLabel>
