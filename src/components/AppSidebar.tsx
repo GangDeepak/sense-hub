@@ -79,8 +79,8 @@ export function AppSidebar() {
         <SidebarFooter className="p-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 w-full rounded-md p-2 hover:bg-accent transition-colors text-left">
-                <Avatar className="h-8 w-8">
+              <button className={`flex items-center gap-2 w-full rounded-md p-2 hover:bg-accent transition-colors text-left ${collapsed ? 'justify-center' : ''}`}>
+                <Avatar className="h-8 w-8 shrink-0">
                   <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
                     {getInitials(user.name)}
                   </AvatarFallback>
