@@ -27,12 +27,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [registeredUsers, setRegisteredUsers] = useState(MOCK_USERS);
 
-  const login = (email: string, password: string) => {
+  const login = (email: string, password: string, role: UserRole) => {
     const found = registeredUsers.find(
       (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
     );
     if (found) {
-      setUser({ email: found.email, name: found.name, role: found.role });
+      setUser({ email: found.email, name: found.name, role });
       return { success: true };
     }
     return { success: false, error: "Invalid email or password" };
