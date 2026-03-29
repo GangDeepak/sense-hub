@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Play, Loader2 } from "lucide-react";
 
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = "https://checking-manufacturer-textilevenues.trycloudflare.com/api";
 
 // ── In-memory cache ────────────────────────────────────────────────────────────
 const cache: Record<string, any> = {};
