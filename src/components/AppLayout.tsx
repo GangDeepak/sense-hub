@@ -9,11 +9,17 @@ export function AppLayout() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <style>{`
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)/0.4); }
+      `}</style>
+      <div className="h-screen flex w-full overflow-hidden">
         <AppSidebar />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
           {!isAuthenticated && (
-            <header className="flex items-center justify-end gap-2 px-6 py-3 border-b">
+            <header className="flex-shrink-0 flex items-center justify-end gap-2 px-6 py-3 border-b">
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" asChild>
                   <Link to="/login">Login</Link>
@@ -24,7 +30,7 @@ export function AppLayout() {
               </div>
             </header>
           )}
-          <main className="flex-1 p-6">
+          <main className="flex-1 h-full overflow-hidden">
             <Outlet />
           </main>
         </div>

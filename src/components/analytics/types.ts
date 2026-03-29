@@ -18,9 +18,9 @@ export interface DashboardData {
     per_session: { min: number; median: number; max: number };
   };
   time_series: { date: string; count: number }[];
-  queries_per_user: { user: string; count: number }[];
+  q_per_user: { user: string; count: number }[];
   latency_buckets: Record<string, number>;
-  word_count_buckets: Record<string, number>;
+  word_bucket_counts: Record<string, number>;
   user_accuracy: { user: string; like: number; dislike: number }[];
   cost_stats: { count?: number; min?: string; avg?: string; median?: string; max?: string; total?: string };
   cost_per_user: { min?: string; median?: string; max?: string };

@@ -21,6 +21,7 @@ const GroundingModule = () => {
   const [queryError, setQueryError] = useState<string | null>(null);
   const [knowledgeError, setKnowledgeError] = useState<string | null>(null);
   const [highlightKid, setHighlightKid] = useState<string | null>(null);
+  const [highlightQueryKid, setHighlightQueryKid] = useState<string | null>(null);
 
   const loadQueries = useCallback(async (col?: string) => {
     const c = col || queryCollection;
@@ -68,6 +69,7 @@ const GroundingModule = () => {
   const handleTabChange = (tab: "overview" | "queries" | "knowledges") => {
     setActiveTab(tab);
     setHighlightKid(null);
+    setHighlightQueryKid(null);
   };
 
   const handleCollectionChange = (val: string) => {
@@ -91,14 +93,18 @@ const GroundingModule = () => {
     setActiveTab("knowledges");
   };
 
+  const handleDrillToQueries = (kid: string) => {
+    setHighlightQueryKid(kid);
+    setActiveTab("queries");
+  };
+
   const currentCollections = activeTab === "knowledges" ? KNOWLEDGE_COLLECTIONS : QUERY_COLLECTIONS;
   const currentCollection = activeTab === "knowledges" ? knowledgeCollection : queryCollection;
 
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Sub-nav */}
-      <div className="flex items-center gap-0.5 px-6 border-b border-border bg-card sticky top-0 z-10">
-        <span className="text-[13px] font-mono text-muted-foreground py-3.5 mr-5">query-db</span>
+      <div className="flex items-center gap-0.5 px-4 border-b border-border bg-card sticky top-0 z-10">
         {(["overview", "queries", "knowledges"] as const).map((tab) => (
           <button
             key={tab}
@@ -138,7 +144,7 @@ const GroundingModule = () => {
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-hidden flex flex-col">
         {activeTab === "overview" && (
           <OverviewTab
             queries={queries}
@@ -151,6 +157,7 @@ const GroundingModule = () => {
             error={queryError || knowledgeError}
             onSwitchTab={(tab) => handleTabChange(tab as any)}
             onDrillToKnowledge={handleDrillToKnowledge}
+            onDrillToQueries={handleDrillToQueries}
           />
         )}
         {activeTab === "queries" && (
@@ -160,6 +167,7 @@ const GroundingModule = () => {
             loading={queryLoading}
             error={queryError}
             onReload={() => loadQueries()}
+            highlightKnowledgeId={highlightQueryKid}
           />
         )}
         {activeTab === "knowledges" && (

@@ -3,6 +3,18 @@ export const BASE_URL = "http://127.0.0.1:8000";
 export const QUERY_COLLECTIONS = ["query_memory", "query_memory_dev", "query_memory_prod"];
 export const KNOWLEDGE_COLLECTIONS = ["knowledge_memory", "knowledge_memory_dev", "knowledge_memory_prod"];
 
+// Collections where edit/insert is allowed
+export const EDITABLE_COLLECTIONS = [
+  "query_memory",
+  "query_memory_dev",
+  "knowledge_memory",
+  "knowledge_memory_dev",
+];
+
+export function isEditable(collection: string): boolean {
+  return EDITABLE_COLLECTIONS.includes(collection);
+}
+
 export interface QueryRecord {
   _doc_id?: string;
   user_query?: string;
@@ -29,6 +41,54 @@ export interface KnowledgeRecord {
   app_id?: string;
   [key: string]: unknown;
 }
+
+// ── API helpers ──────────────────────────────────────────────────────────────
+
+export async function apiUpdatePoint(
+  collection: string,
+  pointId: string,
+  payload: Record<string, unknown>
+): Promise<void> {
+  const res = await fetch(`${BASE_URL}/grounding/point/${collection}/${pointId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ payload }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`Update failed (${res.status}): ${text}`);
+  }
+}
+
+export async function apiDeletePoint(collection: string, pointId: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/grounding/point/${collection}/${pointId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`Delete failed (${res.status}): ${text}`);
+  }
+}
+
+export async function apiInsert(
+  collection: string,
+  data: Record<string, unknown>[],
+  textKey: string
+): Promise<number> {
+  const res = await fetch(`${BASE_URL}/grounding/insert`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ collection_name: collection, data, text_key: textKey }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`Insert failed (${res.status}): ${text}`);
+  }
+  const json = await res.json();
+  return json.inserted_count ?? 0;
+}
+
+// ── Misc helpers ──────────────────────────────────────────────────────────────
 
 export function normalise(item: any): any {
   if (item && typeof item === "object" && !Array.isArray(item)) {

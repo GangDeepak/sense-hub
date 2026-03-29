@@ -8,7 +8,6 @@ interface AnalyticsChartsProps {
 }
 
 const LATENCY_BUCKETS = ["0-5s", "5-10s", "10-15s", "15-20s", "20s+"];
-const WORD_BUCKETS = ["0-50", "50-100", "100-200", "200-300", "300-500", "500-1000", "1000+"];
 
 const ChartSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <div className="bg-secondary border border-border rounded-lg p-3.5">
@@ -18,11 +17,23 @@ const ChartSection = ({ title, children }: { title: string; children: React.Reac
 );
 
 const AnalyticsCharts = ({ data }: AnalyticsChartsProps) => {
+  console.log("Rendering AnalyticsCharts with data:", data);
+
+  // ✅ Fix 1: API returns q_per_user, not queries_per_user
   const timeSeriesData = (data.time_series || []).map((d) => ({ date: d.date, count: d.count }));
-  const queriesPerUser = (data.queries_per_user || []).map((d) => ({ name: d.user.split("@")[0], count: d.count }));
+  const queriesPerUser = (data.q_per_user || []).map((d) => ({
+    name: d.user.split("@")[0],
+    count: d.count,
+  }));
 
   const latencyData = LATENCY_BUCKETS.map((b) => ({ bucket: b, count: data.latency_buckets?.[b] || 0 }));
-  const wordData = WORD_BUCKETS.map((b) => ({ bucket: b, count: data.word_count_buckets?.[b] || 0 }));
+
+  // ✅ Fix 2: API returns word_bucket_counts with keys like "0-20", "21-50", etc.
+  const wordBucketCounts = data.word_bucket_counts || {};
+  const wordData = Object.entries(wordBucketCounts).map(([bucket, count]) => ({
+    bucket,
+    count: count as number,
+  }));
 
   const feedbackData = (data.user_accuracy || []).map((u) => ({
     name: u.user.split("@")[0],
@@ -46,6 +57,8 @@ const AnalyticsCharts = ({ data }: AnalyticsChartsProps) => {
               </LineChart>
             </ResponsiveContainer>
           </ChartSection>
+
+          {/* ✅ Fix 1: now uses q_per_user */}
           <ChartSection title="👤 Queries per User">
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={queriesPerUser}>
@@ -74,6 +87,8 @@ const AnalyticsCharts = ({ data }: AnalyticsChartsProps) => {
               </BarChart>
             </ResponsiveContainer>
           </ChartSection>
+
+          {/* ✅ Fix 2: now uses word_bucket_counts with actual keys from API */}
           <ChartSection title="📝 Response Word Count Buckets">
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={wordData}>
