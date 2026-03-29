@@ -38,7 +38,7 @@ function getInitials(name: string) {
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const location = useLocation();
+  const _ = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
 
   const items = allItems.filter(
