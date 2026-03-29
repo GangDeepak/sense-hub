@@ -23,10 +23,10 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const allItems = [
-  { title: "Home", url: "/", icon: Home, roles: ["user", "admin"] as const },
-  { title: "Chat Analytics", url: "/chat-analytics", icon: BarChart3, roles: ["user"] as const },
-  { title: "Grounding Module", url: "/grounding-module", icon: BookOpen, roles: ["user"] as const },
+const allItems: { title: string; url: string; icon: typeof Home; roles: UserRole[] }[] = [
+  { title: "Home", url: "/", icon: Home, roles: ["user", "admin"] },
+  { title: "Chat Analytics", url: "/chat-analytics", icon: BarChart3, roles: ["user"] },
+  { title: "Grounding Module", url: "/grounding-module", icon: BookOpen, roles: ["user"] },
 ];
 
 function getInitials(name: string) {
