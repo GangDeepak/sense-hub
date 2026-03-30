@@ -32,10 +32,25 @@ export function GradioDemoProvider({ children }: { children: ReactNode }) {
   const [sessionId, setSessionId] = useState("default_session");
   const [sessions, setSessions] = useState<{ session_uuid: string; created_at?: string; session_name?: string; version?: string }[]>([]);
 
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+
   const updateSessionName = (sid: string, name: string) => {
-    setSessions((prev) =>
-      prev.map((s) => (s.session_uuid === sid ? { ...s, session_name: name.slice(0, 50) } : s))
-    );
+    const trimmed = name.slice(0, 50);
+    setSessions((prev) => prev.map((s) => (s.session_uuid === sid ? { ...s, session_name: trimmed } : s)));
+
+    // Persist session name update in backend (fire-and-forget).
+    void (async () => {
+      try {
+        if (!sid || sid === "default_session") return;
+        await fetch(`${API_BASE}/gradio_demo/session/${sid}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_name: trimmed }),
+        });
+      } catch {
+        // ignore network failures; UI already updated locally.
+      }
+    })();
   };
 
   return (

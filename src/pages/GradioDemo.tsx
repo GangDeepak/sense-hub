@@ -32,6 +32,7 @@ const GradioDemo = () => {
   // Load chat history when session changes
   useEffect(() => {
     if (!sessionId) return;
+    setMessages([]);
     (async () => {
       try {
         const res = await fetch(`${API_BASE}/gradio_demo/chats/${sessionId}`);

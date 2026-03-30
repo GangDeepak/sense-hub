@@ -1,4 +1,4 @@
-import { Home, BarChart3, BookOpen, LogOut, MessageSquare, Shield, History } from "lucide-react";
+import { Home, BarChart3, BookOpen, LogOut, MessageSquare, Shield, History, Trash2 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { UserRole } from "@/contexts/AuthContext";
@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useGradioDemoSafe } from "@/hooks/useGradioDemoSafe";
 import { INSURED_LIST } from "@/contexts/GradioDemoContext";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
@@ -57,24 +57,32 @@ export function AppSidebar() {
   const gradio = useGradioDemoSafe();
 
   const isOnGradio = location.pathname === "/gradio-demo";
+  const sessions = gradio?.sessions || [];
 
   const items = allItems.filter(
     (item) => !isAuthenticated || item.roles.includes(user!.role)
   );
 
+  const fetchSessions = async () => {
+    const res = await fetch(`${API_BASE}/gradio_demo/sessions`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.sessions || [];
+  };
+
   // Fetch sessions when on gradio page
-  const [sessions, setSessions] = useState<{ session_uuid: string; created_at?: string; session_name?: string; version?: string }[]>([]);
   useEffect(() => {
-    if (!isOnGradio) return;
+    if (!isOnGradio || !gradio) return;
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/gradio_demo/sessions`);
-        if (res.ok) {
-          const data = await res.json();
-          setSessions(data.sessions || []);
-        }
-      } catch { /* ignore */ }
+        const list = await fetchSessions();
+        gradio.setSessions(list);
+      } catch {
+        // ignore
+      }
     })();
+    // Intentionally only dependent on page location; avoid refetch loops.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnGradio]);
 
   return (
@@ -109,6 +117,31 @@ export function AppSidebar() {
         {/* Gradio Demo sub-items */}
         {isOnGradio && !collapsed && gradio && (
           <SidebarGroup>
+            <div className="pb-2">
+              <button
+                onClick={() => {
+                  const newId = crypto.randomUUID();
+                  gradio.setSessionId(newId);
+
+                  fetch(`${API_BASE}/gradio_demo/session/${newId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ session_name: "New Chat" }),
+                  })
+                    .then(async () => {
+                      const list = await fetchSessions();
+                      gradio.setSessions(list);
+                    })
+                    .catch(() => {});
+                }}
+                className="w-full flex items-center gap-2 text-sm px-3 py-2 rounded-md 
+                          transition-colors group
+                          hover:bg-sky-100 active:bg-sky-200"
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                <span className="font-medium">New chat</span>
+              </button>
+            </div>
             <SidebarGroupLabel className="text-xs text-muted-foreground">
               <Shield className="mr-1.5 h-3 w-3" />
               Select Insured Name
@@ -136,27 +169,6 @@ export function AppSidebar() {
               </div>
             </SidebarGroupContent>
 
-            <div className="px-2 pb-2">
-              <button
-                onClick={() => {
-                  const newId = crypto.randomUUID();
-                  gradio.setSessionId(newId);
-                  
-                  fetch(`${API_BASE}/gradio_demo/session/${newId}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ version: "v1.0" }),
-                  }).then(() => {
-                    setSessions((prev) => [{ session_uuid: newId, version: "v1.0" }, ...prev]);
-                  }).catch(() => {});
-                }}
-                className="w-full flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                <MessageSquare className="h-3 w-3" />
-                Create New Session
-              </button>
-            </div>
-
             <SidebarGroupLabel className="text-xs text-muted-foreground">
               <History className="mr-1.5 h-3 w-3" />
               Chat History
@@ -168,13 +180,44 @@ export function AppSidebar() {
                 )}
                 {sessions.map((s) => (
                   <SidebarMenuItem key={s.session_uuid}>
-                    <SidebarMenuButton
-                      onClick={() => gradio.setSessionId(s.session_uuid)}
-                      className={`text-xs ${gradio.sessionId === s.session_uuid ? "bg-accent text-primary font-medium" : ""}`}
-                    >
-                      <MessageSquare className="mr-2 h-3 w-3" />
-                      <span className="truncate">{s.session_name || s.session_uuid.slice(0, 12) + "..."}</span>
-                    </SidebarMenuButton>
+                    <div className="flex items-center w-full">
+                      <SidebarMenuButton
+                        onClick={() => gradio.setSessionId(s.session_uuid)}
+                        className={`flex-1 text-xs ${gradio.sessionId === s.session_uuid ? "bg-accent text-primary font-medium" : ""}`}
+                      >
+                        <MessageSquare className="mr-2 h-3 w-3" />
+                        <span className="truncate">{s.session_name || s.session_uuid.slice(0, 12) + "..."}</span>
+                      </SidebarMenuButton>
+
+                      <button
+                        type="button"
+                        aria-label="Delete session"
+                        className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+
+                          const ok = window.confirm("Delete this session? This cannot be undone.");
+                          if (!ok) return;
+
+                          try {
+                            const res = await fetch(`${API_BASE}/gradio_demo/session/${s.session_uuid}`, { method: "DELETE" });
+                            if (!res.ok) return;
+
+                            const list = await fetchSessions();
+                            gradio.setSessions(list);
+
+                            if (gradio.sessionId === s.session_uuid) {
+                              gradio.setSessionId(list[0]?.session_uuid || "default_session");
+                            }
+                          } catch {
+                            // ignore
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
