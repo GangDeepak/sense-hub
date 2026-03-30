@@ -173,7 +173,7 @@ export function AppSidebar() {
                       className={`text-xs ${gradio.sessionId === s.session_uuid ? "bg-accent text-primary font-medium" : ""}`}
                     >
                       <MessageSquare className="mr-2 h-3 w-3" />
-                      <span className="truncate">{s.session_uuid.slice(0, 12)}...</span>
+                      <span className="truncate">{s.session_name || s.session_uuid.slice(0, 12) + "..."}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

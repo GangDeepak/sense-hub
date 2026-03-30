@@ -54,7 +54,13 @@ const GradioDemo = () => {
     if (!text || isStreaming) return;
 
     const userMsg: ChatMessage = { role: "user", content: text };
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => {
+      // Set session name from first user message
+      if (prev.length === 0) {
+        updateSessionName(sessionId, text.slice(0, 50));
+      }
+      return [...prev, userMsg];
+    });
     setInput("");
     setIsStreaming(true);
 
