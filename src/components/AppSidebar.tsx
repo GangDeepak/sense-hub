@@ -63,7 +63,7 @@ export function AppSidebar() {
   );
 
   // Fetch sessions when on gradio page
-  const [sessions, setSessions] = useState<{ session_uuid: string; created_at?: string }[]>([]);
+  const [sessions, setSessions] = useState<{ session_uuid: string; created_at?: string; session_name?: string; version?: string }[]>([]);
   useEffect(() => {
     if (!isOnGradio) return;
     (async () => {
