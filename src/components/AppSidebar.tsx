@@ -142,8 +142,12 @@ export function AppSidebar() {
                   const newId = crypto.randomUUID();
                   gradio.setSessionId(newId);
                   
-                  fetch(`${API_BASE}/gradio_demo/session/${newId}`, { method: "POST" }).then(() => {
-                    setSessions((prev) => [{ session_uuid: newId }, ...prev]);
+                  fetch(`${API_BASE}/gradio_demo/session/${newId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ version: "v1.0" }),
+                  }).then(() => {
+                    setSessions((prev) => [{ session_uuid: newId, version: "v1.0" }, ...prev]);
                   }).catch(() => {});
                 }}
                 className="w-full flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
