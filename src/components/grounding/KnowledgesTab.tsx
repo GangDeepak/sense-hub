@@ -156,7 +156,7 @@ const EditableField = ({ fieldKey, value, editable, onSave }: { fieldKey: string
   const [err, setErr] = useState<string | null>(null);
   const [open, setOpen] = useState(true);
 
-  const isLocked = fieldKey === "knowledge_id" || fieldKey === "_doc_id" || fieldKey === "short_description";
+  const isLocked = fieldKey === "knowledge_id" || fieldKey === "_doc_id";
   const isComplex = (typeof value === "object" && value !== null) || (typeof value === "string" && (String(value).length > 100 || value.includes("\n")));
 
   const handleSave = async () => {

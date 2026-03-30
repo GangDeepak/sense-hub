@@ -5,7 +5,7 @@ import QueryAnalytics from "@/components/analytics/QueryAnalytics";
 import FaqAnalytics from "@/components/analytics/FaqAnalytics";
 import type { DashboardData, FilterState } from "@/components/analytics/types";
 
-const API_BASE = "https://checking-manufacturer-textile-venues.trycloudflare.com/api";
+const API_BASE = "http://127.0.0.1:8000/api";
 
 const ChatAnalytics = () => {
   const [data, setData] = useState<DashboardData | null>(() => {

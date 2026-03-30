@@ -11,31 +11,31 @@ interface EnrichedQuery extends QueryItem {
 
 // ── Shared Filter Dropdown (Replicated from Grounding/QueriesTab) ────────────
 const FilterDropdown = ({ label, items, activeValue, onSelect, onClear, colorClass = "text-primary", icon: Icon }: {
-  label: string;
-  items: { value: string; count: number }[];
+  label: string; 
+  items: { value: string; count: number }[]; 
   activeValue: string | null;
-  onSelect: (v: string) => void;
-  onClear: () => void;
+  onSelect: (v: string) => void; 
+  onClear: () => void; 
   colorClass?: string;
   icon?: any;
 }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const filtered = items.filter((i) => i.value.toLowerCase().includes(search.toLowerCase()));
-
+  
   return (
     <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
+      <button 
+        onClick={() => setOpen(!open)} 
         className={`inline-flex items-center gap-1.5 text-[11px] font-mono px-3 h-[30px] rounded-full border cursor-pointer whitespace-nowrap transition-all duration-300 ${
-          activeValue
-            ? `${colorClass} bg-primary/10 border-primary/40 shadow-[0_0_10px_rgba(59,130,246,0.15)]`
+          activeValue && activeValue !== "ALL" 
+            ? `${colorClass} bg-primary/10 border-primary/40 shadow-[0_0_10px_rgba(59,130,246,0.15)]` 
             : "text-muted-foreground bg-card/50 backdrop-blur-sm border-border hover:border-muted-foreground/50 hover:text-foreground"
         }`}
       >
         {Icon && <Icon className="w-3 h-3" />}
         <span>{label}</span>
-        {activeValue && (
+        {activeValue && activeValue !== "ALL" && (
           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 truncate max-w-[90px] backdrop-blur-md">
             {activeValue}
           </span>
@@ -46,37 +46,33 @@ const FilterDropdown = ({ label, items, activeValue, onSelect, onClear, colorCla
       {open && (
         <div className="absolute top-[calc(100%+5px)] right-0 min-w-[200px] bg-card border border-border rounded-lg p-1.5 z-50 shadow-lg max-h-[300px] overflow-y-auto">
           {items.length > 6 && (
-            <input
-              className="w-full text-[11px] font-mono bg-secondary border border-border rounded px-2 py-1.5 mb-1 outline-none text-foreground placeholder:text-muted-foreground"
-              placeholder={`Search ${label.toLowerCase()}…`}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              autoFocus
+            <input 
+              className="w-full text-[11px] font-mono bg-secondary border border-border rounded px-2 py-1.5 mb-1 outline-none text-foreground placeholder:text-muted-foreground" 
+              placeholder={`Search ${label.toLowerCase()}…`} 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+              autoFocus 
             />
           )}
           {filtered.map((item) => (
-            <div
-              key={item.value}
-              onClick={() => { onSelect(item.value); setOpen(false); setSearch(""); }}
+            <div 
+              key={item.value} 
+              onClick={() => { onSelect(item.value); setOpen(false); setSearch(""); }} 
               className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer text-[11px] font-mono transition-colors hover:bg-secondary ${
                 activeValue === item.value ? colorClass : "text-muted-foreground"
               }`}
             >
-              <span className="truncate mr-2">{item.value}</span>
-              <span className="text-[10px] text-muted-foreground flex-shrink-0">{item.count}</span>
+              <span>{item.value}</span>
+              <span className="text-[10px] text-muted-foreground ml-auto">{item.count}</span>
             </div>
           ))}
-          {activeValue && (
-            <>
-              <div className="h-px bg-border my-1" />
-              <button
-                onClick={() => { onClear(); setOpen(false); setSearch(""); }}
-                className="w-full text-left px-2 py-1.5 text-[10px] font-mono text-muted-foreground hover:text-destructive rounded transition-colors"
-              >
-                ✕ Clear {label.toLowerCase()}
-              </button>
-            </>
-          )}
+          <div className="h-px bg-border my-1" />
+          <button 
+            onClick={() => { onClear(); setOpen(false); setSearch(""); }} 
+            className="w-full text-left px-2 py-1.5 text-[10px] font-mono text-muted-foreground hover:text-destructive rounded transition-colors"
+          >
+            ✕ Clear {label.toLowerCase()}
+          </button>
         </div>
       )}
     </div>
@@ -85,8 +81,8 @@ const FilterDropdown = ({ label, items, activeValue, onSelect, onClear, colorCla
 
 const QueryAnalytics = ({ data }: { data: DashboardData | null }) => {
   const [search, setSearch] = useState("");
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState("ALL");
+  const [selectedBucket, setSelectedBucket] = useState("ALL");
   const [selectedQuery, setSelectedQuery] = useState<EnrichedQuery | null>(null);
 
   // 1. Flatten Data
@@ -107,9 +103,9 @@ const QueryAnalytics = ({ data }: { data: DashboardData | null }) => {
     });
 
     return flattened.sort((a, b) => {
-      const dateB = b.session_created ? new Date(b.session_created).getTime() : 0;
       const dateA = a.session_created ? new Date(a.session_created).getTime() : 0;
-      return dateB - dateA;
+      const dateB = b.session_created ? new Date(b.session_created).getTime() : 0;
+      return dateA - dateB;
     });
   }, [data]);
 
@@ -130,11 +126,11 @@ const QueryAnalytics = ({ data }: { data: DashboardData | null }) => {
   // 3. Filtered List
   const filteredQueries = useMemo(() => {
     return allQueries.filter((q) => {
-      const matchSearch =
-        q.query.toLowerCase().includes(search.toLowerCase()) ||
+      const matchSearch = 
+        q.query.toLowerCase().includes(search.toLowerCase()) || 
         (q.query_id || "").toLowerCase().includes(search.toLowerCase());
-      const matchUser = !selectedUser || q.userEmail === selectedUser;
-      const matchBucket = !selectedBucket || q.bucket === selectedBucket;
+      const matchUser = selectedUser === "ALL" || q.userEmail === selectedUser;
+      const matchBucket = selectedBucket === "ALL" || q.bucket === selectedBucket;
       return matchSearch && matchUser && matchBucket;
     });
   }, [allQueries, search, selectedUser, selectedBucket]);
@@ -170,22 +166,22 @@ const QueryAnalytics = ({ data }: { data: DashboardData | null }) => {
           <div className="w-px h-[22px] bg-border mx-1" />
 
           {/* User Filter */}
-          <FilterDropdown
-            label="User"
-            items={userStats}
-            activeValue={selectedUser}
-            onSelect={(v) => setSelectedUser(v === selectedUser ? null : v)}
-            onClear={() => setSelectedUser(null)}
+          <FilterDropdown 
+            label="User" 
+            items={userStats} 
+            activeValue={selectedUser} 
+            onSelect={setSelectedUser} 
+            onClear={() => setSelectedUser("ALL")}
             icon={User}
           />
 
           {/* Bucket Filter */}
-          <FilterDropdown
-            label="Latency"
-            items={bucketStats}
-            activeValue={selectedBucket}
-            onSelect={(v) => setSelectedBucket(v === selectedBucket ? null : v)}
-            onClear={() => setSelectedBucket(null)}
+          <FilterDropdown 
+            label="Latency" 
+            items={bucketStats} 
+            activeValue={selectedBucket} 
+            onSelect={setSelectedBucket} 
+            onClear={() => setSelectedBucket("ALL")}
             icon={Clock}
             colorClass="text-amber-400"
           />
