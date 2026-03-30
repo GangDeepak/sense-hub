@@ -102,61 +102,70 @@ export const SplitPanelWrapper = ({ listPane, detail }: SplitPanelWrapperProps) 
 
 // ── Generic Field Renderer (re-exported for reuse) ────────────────────────────
 
+// ── Safe FieldBlock Component ─────────────────────────────────────────────────
 export const FieldBlock = ({ label, value }: { label: string; value: unknown }) => {
   const [open, setOpen] = useState(true);
 
-  const isComplex =
-    (typeof value === "object" && value !== null) ||
-    (typeof value === "string" && (value.length > 100 || value.includes("\n")));
+  const isComplex = 
+    (typeof value === "object" && value !== null) || 
+    (typeof value === "string" && (value.length > 150 || value.includes("\n")));
 
+  // Safe rendering function
   const renderVal = (val: unknown): React.ReactNode => {
-    if (val === null || val === undefined)
+    if (val === null || val === undefined) {
       return <span className="text-muted-foreground italic text-xs">null</span>;
-    if (typeof val === "boolean")
+    }
+
+    if (typeof val === "boolean") {
       return <span className="text-green-400 font-mono text-xs">{String(val)}</span>;
-    if (typeof val === "number")
+    }
+
+    if (typeof val === "number") {
       return <span className="text-amber-400 font-mono text-xs">{val}</span>;
-    if (typeof val === "string" && val.length <= 100 && !val.includes("\n"))
-      return <span className="text-blue-300 font-mono text-xs break-all">{val}</span>;
-    if (typeof val === "string")
+    }
+
+    if (typeof val === "string") {
+      if (val.length <= 150 && !val.includes("\n")) {
+        return <span className="text-blue-300 font-mono text-xs break-all">{val}</span>;
+      }
       return (
-        <pre className="bg-secondary/60 border border-border rounded-md p-2.5 font-mono text-xs text-foreground whitespace-pre-wrap break-words leading-relaxed mt-1">
+        <pre className="bg-secondary/60 border border-border rounded-md p-3 font-mono text-xs text-foreground whitespace-pre-wrap break-words leading-relaxed mt-1 overflow-auto max-h-96">
           {val}
         </pre>
       );
-    if (Array.isArray(val) && val.length === 0)
-      return <span className="text-muted-foreground font-mono text-xs">[]</span>;
-    return (
-      <pre
-        className="bg-secondary/60 border border-border rounded-md p-2.5 font-mono text-xs text-foreground whitespace-pre-wrap break-words leading-relaxed mt-1"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(val, null, 2)
-            .replace(/"([^"]+)":/g, '<span class="text-blue-400">"$1"</span>:')
-            .replace(/: "([^"]*)"/g, ': <span class="text-blue-300">"$1"</span>')
-            .replace(/: (\d+\.?\d*)/g, ': <span class="text-amber-400">$1</span>')
-            .replace(/: (true|false)/g, ': <span class="text-green-400">$1</span>')
-            .replace(/: null/g, ': <span class="text-muted-foreground">null</span>'),
-        }}
-      />
-    );
-  };
+    }
 
-  if (!isComplex) {
-    return (
-      <div className="py-3 border-b border-border/60 last:border-0">
-        <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-1">{label}</div>
-        {renderVal(value)}
-      </div>
-    );
-  }
+    // For arrays and objects - use safe stringify
+    try {
+      const jsonString = JSON.stringify(val, null, 2);
+      return (
+        <pre className="bg-secondary/60 border border-border rounded-md p-3 font-mono text-xs text-foreground whitespace-pre-wrap break-words leading-relaxed mt-1 overflow-auto max-h-96">
+          {jsonString}
+        </pre>
+      );
+    } catch (err) {
+      // Fallback for circular references
+      return (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3 text-xs text-destructive/80 font-mono">
+          Unable to display data (circular reference or complex object)
+        </div>
+      );
+    }
+  };
 
   return (
     <div className="py-3 border-b border-border/60 last:border-0">
-      <button className="flex items-center justify-between w-full text-left group" onClick={() => setOpen((p) => !p)}>
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors">{label}</span>
+      <button 
+        className="flex items-center justify-between w-full text-left group" 
+        onClick={() => setOpen((p) => !p)}
+      >
+        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors">
+          {label}
+        </span>
         <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <div className="mt-1">{renderVal(value)}</div>}
+
+      {open && <div className="mt-2">{renderVal(value)}</div>}
     </div>
   );
 };

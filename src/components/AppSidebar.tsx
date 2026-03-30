@@ -87,8 +87,17 @@ export function AppSidebar() {
                 </Avatar>
                 {!collapsed && (
                   <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-medium truncate">{user.name}</span>
-                    <span className="text-xs text-muted-foreground truncate">{user.role}</span>
+                    <span className="text-sm font-medium truncate">
+                      {user.name
+                        .replace(/\./g, ' ')
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                        .join(' ')
+                      }
+                    </span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {user.role?.charAt(0).toUpperCase() + user.role?.slice(1).toLowerCase() || ''}
+                    </span>
                   </div>
                 )}
               </button>
