@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
 export function AppLayout() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   return (
     <SidebarProvider>
@@ -18,7 +18,7 @@ export function AppLayout() {
       <div className="h-screen flex w-full overflow-hidden">
         <AppSidebar />
         <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
-          {!isAuthenticated && (
+          {!isAuthenticated && !isLoading && (
             <header className="flex-shrink-0 flex items-center justify-end gap-2 px-6 py-3 border-b">
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" asChild>

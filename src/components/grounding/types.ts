@@ -1,3 +1,5 @@
+import { getAuthHeaders } from "@/utils/token";
+
 export const BASE_URL = "http://127.0.0.1:8000";
 
 export const QUERY_COLLECTIONS = ["query_memory", "query_memory_dev", "query_memory_prod"];
@@ -51,7 +53,7 @@ export async function apiUpdatePoint(
 ): Promise<void> {
   const res = await fetch(`${BASE_URL}/grounding/point/${collection}/${pointId}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify({ payload }),
   });
   if (!res.ok) {
@@ -63,6 +65,7 @@ export async function apiUpdatePoint(
 export async function apiDeletePoint(collection: string, pointId: string): Promise<void> {
   const res = await fetch(`${BASE_URL}/grounding/point/${collection}/${pointId}`, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);
@@ -77,7 +80,7 @@ export async function apiInsert(
 ): Promise<number> {
   const res = await fetch(`${BASE_URL}/grounding/insert`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify({ collection_name: collection, data, text_key: textKey }),
   });
   if (!res.ok) {

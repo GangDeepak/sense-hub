@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Play, Loader2 } from "lucide-react";
+import { getAuthHeaders } from "@/utils/token";
 
 const API_BASE = "http://localhost:8000/api";
 
@@ -11,7 +12,7 @@ const cache: Record<string, any> = {};
 
 async function cachedFetch<T>(url: string): Promise<T> {
   if (cache[url] !== undefined) return cache[url] as T;
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: getAuthHeaders() });
   if (!res.ok) throw new Error(`${res.status} ${url}`);
   const data = await res.json();
   cache[url] = data;

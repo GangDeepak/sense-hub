@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RefreshCw } from "lucide-react";
 import { BASE_URL, QUERY_COLLECTIONS, KNOWLEDGE_COLLECTIONS, normalise } from "./types";
 import type { QueryRecord, KnowledgeRecord } from "./types";
+import { getAuthHeaders } from "@/utils/token";
 import OverviewTab from "./OverviewTab";
 import QueriesTab from "./QueriesTab";
 import KnowledgesTab from "./KnowledgesTab";
@@ -28,7 +29,7 @@ const GroundingModule = () => {
     setQueryLoading(true);
     setQueryError(null);
     try {
-      const res = await fetch(`${BASE_URL}/grounding/collection/${c}?with_vectors=false`);
+      const res = await fetch(`${BASE_URL}/grounding/collection/${c}?with_vectors=false`, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error(`HTTP ${res.status} — ${res.statusText}`);
       const json = await res.json();
       const data = (json.data || []).map(normalise);
@@ -47,7 +48,7 @@ const GroundingModule = () => {
     setKnowledgeLoading(true);
     setKnowledgeError(null);
     try {
-      const res = await fetch(`${BASE_URL}/grounding/collection/${c}?with_vectors=false`);
+      const res = await fetch(`${BASE_URL}/grounding/collection/${c}?with_vectors=false`, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error(`HTTP ${res.status} — ${res.statusText}`);
       const json = await res.json();
       const data = (json.data || []).map(normalise);

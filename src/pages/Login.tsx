@@ -20,10 +20,10 @@ export default function Login() {
   const location = useLocation();
   const from = (location.state as any)?.from?.pathname || "/";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const result = login(email, password, role);
+    const result = await login(email, password, role);
     if (result.success) {
       navigate(from, { replace: true });
     } else {

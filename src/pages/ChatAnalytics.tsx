@@ -4,6 +4,7 @@ import ChatOverview from "@/components/analytics/ChatOverview";
 import QueryAnalytics from "@/components/analytics/QueryAnalytics";
 import FaqAnalytics from "@/components/analytics/FaqAnalytics";
 import type { DashboardData, FilterState } from "@/components/analytics/types";
+import { getAuthHeaders } from "@/utils/token";
 
 const API_BASE = "http://127.0.0.1:8000/api";
 
@@ -29,7 +30,7 @@ const ChatAnalytics = () => {
     setError(null);
     try {
       const url = `${API_BASE}/dashboard?start_date=${filters.startDate}&end_date=${filters.endDate}&users=${encodeURIComponent(filters.users)}&tenants=${encodeURIComponent(filters.tenants)}&quick_range=${filters.quickRange}&env=${filters.env}`;
-      const r = await fetch(url);
+      const r = await fetch(url, { headers: getAuthHeaders() });
       const ct = r.headers.get("content-type") || "";
       if (!ct.includes("application/json")) {
         const txt = await r.text();

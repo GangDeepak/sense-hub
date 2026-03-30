@@ -18,10 +18,10 @@ export default function Signup() {
   const { signup } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const result = signup(name, email, password, role);
+    const result = await signup(name, email, password, role);
     if (result.success) {
       navigate("/", { replace: true });
     } else {
