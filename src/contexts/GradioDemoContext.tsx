@@ -20,8 +20,9 @@ interface GradioDemoContextType {
   setSelectedInsured: (item: InsuredItem | null) => void;
   sessionId: string;
   setSessionId: (id: string) => void;
-  sessions: { session_uuid: string; created_at?: string }[];
-  setSessions: (s: { session_uuid: string; created_at?: string }[]) => void;
+  sessions: { session_uuid: string; created_at?: string; session_name?: string; version?: string }[];
+  setSessions: (s: { session_uuid: string; created_at?: string; session_name?: string; version?: string }[]) => void;
+  updateSessionName: (sessionId: string, name: string) => void;
 }
 
 const GradioDemoContext = createContext<GradioDemoContextType | undefined>(undefined);
