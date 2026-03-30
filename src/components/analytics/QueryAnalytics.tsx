@@ -292,7 +292,7 @@ const QueryAnalytics = ({ data }: { data: DashboardData | null }) => {
   } : null;
 
   return (
-    <div className="flex-1 min-h-0 -m-5">
+    <div className="flex flex-col flex-1 min-h-0 -m-5">
       <SplitPanelWrapper listPane={listPane} detail={detailConfig} />
     </div>
   );

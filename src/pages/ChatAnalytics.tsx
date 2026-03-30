@@ -104,7 +104,7 @@ const ChatAnalytics = () => {
            </div>
         )}
         {!loading && !error && data && (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-700">
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-700 flex flex-col flex-1 min-h-0">
             {activeTab === "overview" && <ChatOverview data={data} />}
             {activeTab === "query" && <QueryAnalytics data={data} />}
             {activeTab === "faq" && <FaqAnalytics />}
