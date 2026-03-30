@@ -1,4 +1,4 @@
-import { Home, BarChart3, BookOpen, LogOut } from "lucide-react";
+import { Home, BarChart3, BookOpen, LogOut, MessageSquare, Shield, History } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { UserRole } from "@/contexts/AuthContext";
@@ -11,22 +11,36 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useGradioDemoSafe } from "@/hooks/useGradioDemoSafe";
+import { INSURED_LIST } from "@/contexts/GradioDemoContext";
+import { useEffect, useState } from "react";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 const allItems: { title: string; url: string; icon: typeof Home; roles: UserRole[] }[] = [
   { title: "Home", url: "/", icon: Home, roles: ["user", "admin"] },
   { title: "Chat Analytics", url: "/chat-analytics", icon: BarChart3, roles: ["user"] },
   { title: "Grounding Module", url: "/grounding-module", icon: BookOpen, roles: ["user"] },
+  { title: "Gradio Demo", url: "/gradio-demo", icon: MessageSquare, roles: ["user"] },
 ];
 
 function getInitials(name: string) {
@@ -38,12 +52,30 @@ function getInitials(name: string) {
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const _ = useLocation();
+  const location = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
+  const gradio = useGradioDemoSafe();
+
+  const isOnGradio = location.pathname === "/gradio-demo";
 
   const items = allItems.filter(
     (item) => !isAuthenticated || item.roles.includes(user!.role)
   );
+
+  // Fetch sessions when on gradio page
+  const [sessions, setSessions] = useState<{ session_uuid: string; created_at?: string }[]>([]);
+  useEffect(() => {
+    if (!isOnGradio) return;
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/gradio_demo/sessions`);
+        if (res.ok) {
+          const data = await res.json();
+          setSessions(data.sessions || []);
+        }
+      } catch { /* ignore */ }
+    })();
+  }, [isOnGradio]);
 
   return (
     <Sidebar collapsible="icon">
@@ -73,6 +105,61 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Gradio Demo sub-items */}
+        {isOnGradio && !collapsed && gradio && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-xs text-muted-foreground">
+              <Shield className="mr-1.5 h-3 w-3" />
+              Select Insured Name
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <div className="px-2 pb-2">
+                <Select
+                  value={gradio.selectedInsured?.ref_id || ""}
+                  onValueChange={(val) => {
+                    const found = INSURED_LIST.find((i) => i.ref_id === val);
+                    gradio.setSelectedInsured(found || null);
+                  }}
+                >
+                  <SelectTrigger className="w-full text-xs h-8">
+                    <SelectValue placeholder="Choose insured..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INSURED_LIST.map((item) => (
+                      <SelectItem key={item.ref_id} value={item.ref_id} className="text-xs">
+                        {item.insured_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </SidebarGroupContent>
+
+            <SidebarGroupLabel className="text-xs text-muted-foreground">
+              <History className="mr-1.5 h-3 w-3" />
+              Chat History
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {sessions.length === 0 && (
+                  <p className="px-3 py-1 text-xs text-muted-foreground">No sessions yet</p>
+                )}
+                {sessions.map((s) => (
+                  <SidebarMenuItem key={s.session_uuid}>
+                    <SidebarMenuButton
+                      onClick={() => gradio.setSessionId(s.session_uuid)}
+                      className={`text-xs ${gradio.sessionId === s.session_uuid ? "bg-accent text-primary font-medium" : ""}`}
+                    >
+                      <MessageSquare className="mr-2 h-3 w-3" />
+                      <span className="truncate">{s.session_uuid.slice(0, 12)}...</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       {isAuthenticated && user && (
