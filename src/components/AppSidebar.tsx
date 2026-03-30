@@ -141,7 +141,7 @@ export function AppSidebar() {
                 onClick={() => {
                   const newId = crypto.randomUUID();
                   gradio.setSessionId(newId);
-                  setMessages?.([]);
+                  
                   fetch(`${API_BASE}/gradio_demo/session/${newId}`, { method: "POST" }).then(() => {
                     setSessions((prev) => [{ session_uuid: newId }, ...prev]);
                   }).catch(() => {});
