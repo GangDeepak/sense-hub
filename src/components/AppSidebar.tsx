@@ -63,7 +63,7 @@ export function AppSidebar() {
   );
 
   // Fetch sessions when on gradio page
-  const [sessions, setSessions] = useState<{ session_uuid: string; created_at?: string }[]>([]);
+  const [sessions, setSessions] = useState<{ session_uuid: string; created_at?: string; session_name?: string; version?: string }[]>([]);
   useEffect(() => {
     if (!isOnGradio) return;
     (async () => {
@@ -142,8 +142,12 @@ export function AppSidebar() {
                   const newId = crypto.randomUUID();
                   gradio.setSessionId(newId);
                   
-                  fetch(`${API_BASE}/gradio_demo/session/${newId}`, { method: "POST" }).then(() => {
-                    setSessions((prev) => [{ session_uuid: newId }, ...prev]);
+                  fetch(`${API_BASE}/gradio_demo/session/${newId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ version: "v1.0" }),
+                  }).then(() => {
+                    setSessions((prev) => [{ session_uuid: newId, version: "v1.0" }, ...prev]);
                   }).catch(() => {});
                 }}
                 className="w-full flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
@@ -169,7 +173,7 @@ export function AppSidebar() {
                       className={`text-xs ${gradio.sessionId === s.session_uuid ? "bg-accent text-primary font-medium" : ""}`}
                     >
                       <MessageSquare className="mr-2 h-3 w-3" />
-                      <span className="truncate">{s.session_uuid.slice(0, 12)}...</span>
+                      <span className="truncate">{s.session_name || s.session_uuid.slice(0, 12) + "..."}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
