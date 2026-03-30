@@ -15,7 +15,7 @@ interface ChatMessage {
 }
 
 const GradioDemo = () => {
-  const { selectedInsured, sessionId } = useGradioDemo();
+  const { selectedInsured, sessionId, updateSessionName } = useGradioDemo();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
