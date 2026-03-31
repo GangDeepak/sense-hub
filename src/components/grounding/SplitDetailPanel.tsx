@@ -17,9 +17,10 @@ const DEFAULT_RIGHT = 420;
 interface SplitPanelWrapperProps {
   listPane: React.ReactNode;
   detail: DetailPanelConfig | null;
+  listPaneClassName?: string;
 }
 
-export const SplitPanelWrapper = ({ listPane, detail }: SplitPanelWrapperProps) => {
+export const SplitPanelWrapper = ({ listPane, detail, listPaneClassName = "overflow-y-auto" }: SplitPanelWrapperProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [rightWidth, setRightWidth] = useState(DEFAULT_RIGHT);
   const dragging = useRef(false);
@@ -61,13 +62,13 @@ export const SplitPanelWrapper = ({ listPane, detail }: SplitPanelWrapperProps) 
   }, []);
 
   if (!detail) {
-    return <div className="flex-1 overflow-y-auto">{listPane}</div>;
+    return <div className={`flex-1 ${listPaneClassName}`}>{listPane}</div>;
   }
 
   return (
     <div ref={containerRef} className="flex flex-1 overflow-hidden bg-background" style={{ minHeight: 0 }}>
       {/* Left — list */}
-      <div className="flex-1 overflow-y-auto min-w-0">
+      <div className={`flex-1 min-w-0 ${listPaneClassName}`}>
         {listPane}
       </div>
 
