@@ -6,6 +6,7 @@ export interface InsuredItem {
 }
 
 export const INSURED_LIST: InsuredItem[] = [
+  { ref_id: "landing_page", insured_name: "Landing Page" },
   { ref_id: "2907133a-b9a6-4dfd-8950-7d3dae3d269a", insured_name: "PHI Group, Inc." },
   { ref_id: "fe894b24-c655-4345-ab14-3ce82af80ded", insured_name: "Windsor Parke Professional Centre Association Inc." },
   { ref_id: "5cbc9806-7165-47ec-a134-e0d83509dd34", insured_name: "King & Queen Company" },
