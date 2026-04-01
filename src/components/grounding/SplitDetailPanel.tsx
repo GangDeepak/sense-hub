@@ -23,6 +23,7 @@ interface SplitPanelWrapperProps {
 export const SplitPanelWrapper = ({ listPane, detail, listPaneClassName = "overflow-y-auto" }: SplitPanelWrapperProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [rightWidth, setRightWidth] = useState(DEFAULT_RIGHT);
+  const [isDragging, setIsDragging] = useState(false);
   const dragging = useRef(false);
   const startX = useRef(0);
   const startRight = useRef(DEFAULT_RIGHT);
@@ -30,6 +31,7 @@ export const SplitPanelWrapper = ({ listPane, detail, listPaneClassName = "overf
   const onMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     dragging.current = true;
+    setIsDragging(true);
     startX.current = e.clientX;
     startRight.current = rightWidth;
     document.body.style.cursor = "col-resize";
@@ -50,6 +52,7 @@ export const SplitPanelWrapper = ({ listPane, detail, listPaneClassName = "overf
     const onMouseUp = () => {
       if (!dragging.current) return;
       dragging.current = false;
+      setIsDragging(false);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
@@ -75,13 +78,15 @@ export const SplitPanelWrapper = ({ listPane, detail, listPaneClassName = "overf
       {/* Drag handle */}
       <div
         onMouseDown={onMouseDown}
-        className="flex-shrink-0 w-2 relative flex items-center justify-center cursor-col-resize group z-10 select-none"
+        className="flex-shrink-0 w-1.5 relative flex items-center justify-center cursor-col-resize group z-50 select-none touch-none"
       >
-        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-primary/50 transition-colors" />
-        <div className="relative z-10 flex items-center justify-center h-10 w-4 rounded-full bg-card border border-border group-hover:border-primary/50 group-hover:bg-secondary transition-all shadow-sm">
+        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-primary/50 group-active:bg-primary transition-colors" />
+        <div className="relative z-10 flex items-center justify-center h-10 w-4 rounded-full bg-card border border-border group-hover:border-primary/50 group-hover:bg-secondary transition-all shadow-sm group-active:scale-95">
           <GripVertical className="w-3 h-3 text-muted-foreground group-hover:text-foreground transition-colors" />
         </div>
       </div>
+
+
 
       {/* Right — detail panel */}
       <div
@@ -107,8 +112,8 @@ export const SplitPanelWrapper = ({ listPane, detail, listPaneClassName = "overf
 export const FieldBlock = ({ label, value }: { label: string; value: unknown }) => {
   const [open, setOpen] = useState(true);
 
-  const isComplex = 
-    (typeof value === "object" && value !== null) || 
+  const isComplex =
+    (typeof value === "object" && value !== null) ||
     (typeof value === "string" && (value.length > 150 || value.includes("\n")));
 
   // Safe rendering function
@@ -156,8 +161,8 @@ export const FieldBlock = ({ label, value }: { label: string; value: unknown }) 
 
   return (
     <div className="py-3 border-b border-border/60 last:border-0">
-      <button 
-        className="flex items-center justify-between w-full text-left group" 
+      <button
+        className="flex items-center justify-between w-full text-left group"
         onClick={() => setOpen((p) => !p)}
       >
         <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors">

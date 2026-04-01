@@ -17,6 +17,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  timestamp?: string;
   moduleOutputs?: ModuleOutputs;
   emailDraft?: EmailDraft;
 }
@@ -49,6 +50,25 @@ const MODULE_OUTPUT_KEY_ORDER = [
   "created_at",
   "_id",
 ] as const;
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+function formatTime(isoStr?: string) {
+  if (!isoStr) return "";
+  try {
+    const d = new Date(isoStr);
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: true,
+    }).format(d);
+  } catch {
+    return "";
+  }
+}
 
 // ── Markdown component definitions ──────────────────────────────────────────
 
@@ -162,16 +182,16 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
 
   // ── Headings ──
   h1({ children }) {
-    return <h1 className="text-lg font-bold mt-5 mb-2 text-foreground tracking-tight border-b border-border pb-1">{children}</h1>;
+    return <h1 className="text-lg font-bold mt-1 mb-2 text-foreground tracking-tight border-b border-border pb-1">{children}</h1>;
   },
   h2({ children }) {
-    return <h2 className="text-base font-semibold mt-4 mb-1.5 text-foreground tracking-tight">{children}</h2>;
+    return <h2 className="text-base font-semibold mt-1 mb-1.5 text-foreground tracking-tight">{children}</h2>;
   },
   h3({ children }) {
-    return <h3 className="text-sm font-semibold mt-3 mb-1 text-foreground">{children}</h3>;
+    return <h3 className="text-sm font-semibold mt-1 mb-1 text-foreground">{children}</h3>;
   },
   h4({ children }) {
-    return <h4 className="text-sm font-medium mt-2 mb-0.5 text-foreground">{children}</h4>;
+    return <h4 className="text-sm font-medium mt-1 mb-0.5 text-foreground">{children}</h4>;
   },
 
   // ── Paragraph ──
@@ -242,6 +262,7 @@ function AssistantMessage({
   isLast,
   moduleOutputs,
   emailDraft,
+  timestamp,
   onShowModules,
   onShowEmail,
 }: {
@@ -250,6 +271,7 @@ function AssistantMessage({
   isLast: boolean;
   moduleOutputs: ModuleOutputs | null;
   emailDraft?: EmailDraft;
+  timestamp?: string;
   onShowModules: () => void;
   onShowEmail: () => void;
 }) {
@@ -269,13 +291,13 @@ function AssistantMessage({
 
   return (
     <div className="flex gap-3 justify-start animate-fade-in">
-      <div className="shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
+      <div className="shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-1">
         <Bot className="h-4 w-4 text-primary" />
       </div>
 
-      <div className="max-w-[80%] min-w-0">
+      <div className="max-w-[80%] min-w-0 flex flex-col">
         {/* Message bubble */}
-        <div className="bg-muted rounded-2xl rounded-bl-md px-4 py-3 text-sm leading-relaxed overflow-hidden">
+        <div className="px-4 text-sm leading-relaxed overflow-hidden">
           {displayContent && (
             <div className="prose-reset max-w-none break-words">
               <ReactMarkdown
@@ -331,38 +353,46 @@ function AssistantMessage({
 
         {/* Action bar — shown on every completed assistant message */}
         {showActionBar && (
-          <div className="mt-1.5 flex flex-wrap items-center gap-1 px-1">
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-            >
-              {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-              <span>{copied ? "Copied" : "Copy"}</span>
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-            >
-              <ThumbsUp className="w-3 h-3" />
-              <span>Like</span>
-            </button>
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-            >
-              <ThumbsDown className="w-3 h-3" />
-              <span>Dislike</span>
-            </button>
-            {moduleOutputs && (
+          <div className="mt-1.5 flex items-center justify-between px-1">
+            <div className="flex flex-wrap items-center gap-1">
               <button
                 type="button"
-                onClick={onShowModules}
+                onClick={handleCopy}
                 className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
               >
-                <Boxes className="w-3 h-3" />
-                <span>Module outputs</span>
+                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                <span>{copied ? "Copied" : "Copy"}</span>
               </button>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+              >
+                <ThumbsUp className="w-3 h-3" />
+                <span>Like</span>
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+              >
+                <ThumbsDown className="w-3 h-3" />
+                <span>Dislike</span>
+              </button>
+              {moduleOutputs && (
+                <button
+                  type="button"
+                  onClick={onShowModules}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                >
+                  <Boxes className="w-3 h-3" />
+                  <span>Module outputs</span>
+                </button>
+              )}
+            </div>
+
+            {timestamp && !isStreaming && (
+              <span className="text-[10px] text-muted-foreground/60 whitespace-nowrap ml-4">
+                {formatTime(timestamp)}
+              </span>
             )}
           </div>
         )}
@@ -384,11 +414,30 @@ const GradioDemo = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom on message or container size change
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (!scrollRef.current) return;
+    const viewport = scrollRef.current.querySelector("[data-radix-scroll-area-viewport]");
+    if (!viewport) return;
+
+    const scrollToBottom = () => {
+      viewport.scrollTop = viewport.scrollHeight;
+    };
+
+    // 1. Initial scroll for new messages (synchronous update)
+    scrollToBottom();
+
+    // 2. Re-scroll on any layout changes (interactive resizing OR streaming content height changes)
+    const observer = new ResizeObserver(() => requestAnimationFrame(scrollToBottom));
+    observer.observe(viewport);
+    
+    // Radix places the actual content in the first child of the viewport
+    const content = viewport.firstElementChild;
+    if (content) {
+      observer.observe(content);
     }
+
+    return () => observer.disconnect();
   }, [messages]);
 
   // Load chat history when session changes
@@ -405,7 +454,11 @@ const GradioDemo = () => {
 
         for (const chat of data.chats || []) {
           if (chat.user_query) {
-            loaded.push({ role: "user", content: chat.user_query });
+            loaded.push({ 
+              role: "user", 
+              content: chat.user_query, 
+              timestamp: chat.created_at || "" 
+            });
           }
 
           // bot_response_text can be:
@@ -462,12 +515,22 @@ const GradioDemo = () => {
             }
           }
 
-          // ── Build module outputs (everything except bot_response_text) ────
+          // ── Build assistant message with small offset ────────────────────
+          let assistantTime = chat.created_at || "";
+          if (assistantTime) {
+            try {
+              const d = new Date(assistantTime);
+              d.setSeconds(d.getSeconds() + 2); // 2s offset for visual separation
+              assistantTime = d.toISOString();
+            } catch { /* fallback */ }
+          }
+
           const { bot_response_text: _omit, ...rest } = chat;
 
           loaded.push({
             role: "assistant",
             content: displayContent,
+            timestamp: assistantTime,
             moduleOutputs: Object.keys(rest).length > 0 ? rest : undefined,
             emailDraft,
           });
@@ -484,7 +547,7 @@ const GradioDemo = () => {
     const text = input.trim();
     if (!text || isStreaming || !selectedInsured) return;
 
-    const userMsg: ChatMessage = { role: "user", content: text };
+    const userMsg: ChatMessage = { role: "user", content: text, timestamp: new Date().toISOString() };
     setMessages((prev) => {
       if (prev.length === 0) {
         updateSessionName(sessionId, text.slice(0, 50));
@@ -509,7 +572,7 @@ const GradioDemo = () => {
           query_id: crypto.randomUUID(),
           chat_history: history,
           insured_name: selectedInsured?.insured_name || "",
-          ref_id: selectedInsured?.ref_id || "",
+          ref_id: selectedInsured?.ref_id === "landing_page" ? "" : (selectedInsured?.ref_id || ""),
           web_search: webSearch,
         }),
       });
@@ -560,6 +623,8 @@ const GradioDemo = () => {
                     updated[updated.length - 1] = {
                       ...last,
                       content: last.content + chunk,
+                      // Set timestamp on first chunk if not set
+                      timestamp: last.timestamp || new Date().toISOString(),
                     };
                     return updated;
                   });
@@ -663,8 +728,11 @@ const GradioDemo = () => {
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 min-h-0" ref={scrollRef as any}>
-        <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+      <ScrollArea 
+        className="flex-1 min-h-0 [&>[data-radix-scroll-area-viewport]>div]:!block [&>[data-radix-scroll-area-viewport]>div]:min-w-full" 
+        ref={scrollRef as any}
+      >
+        <div className="w-full px-6 lg:px-12 py-8 space-y-6 transition-all duration-300">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-[50vh] text-muted-foreground">
               <Bot className="h-12 w-12 mb-3 opacity-30" />
@@ -678,11 +746,18 @@ const GradioDemo = () => {
 
             if (msg.role === "user") {
               return (
-                <div key={i} className="flex gap-3 justify-end animate-fade-in">
-                  <div className="max-w-[75%] rounded-2xl rounded-br-md px-4 py-2.5 text-sm leading-relaxed bg-primary text-primary-foreground">
-                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                <div key={i} className="flex gap-3 justify-end animate-fade-in group w-full">
+                  <div className="flex flex-col items-end gap-1.5 max-w-[75%] min-w-0">
+                    <div className="rounded-2xl rounded-tr-md rounded-br-md px-4 py-2.5 text-sm leading-relaxed bg-primary text-primary-foreground text-left break-words overflow-hidden">
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
+                    </div>
+                    {msg.timestamp && (
+                      <div className="pr-1 text-[10px] text-muted-foreground/60 font-medium">
+                        {formatTime(msg.timestamp)}
+                      </div>
+                    )}
                   </div>
-                  <div className="shrink-0 h-8 w-8 rounded-full bg-primary flex items-center justify-center mt-0.5">
+                  <div className="shrink-0 h-8 w-8 rounded-full bg-primary flex items-center justify-center mt-1">
                     <User className="h-4 w-4 text-primary-foreground" />
                   </div>
                 </div>
@@ -693,6 +768,7 @@ const GradioDemo = () => {
               <AssistantMessage
                 key={i}
                 content={msg.content}
+                timestamp={msg.timestamp}
                 isStreaming={isStreaming}
                 isLast={isLast}
                 moduleOutputs={msg.moduleOutputs ?? null}
@@ -708,7 +784,7 @@ const GradioDemo = () => {
       {/* Bottom area */}
       <div className="flex-shrink-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-t">
         <div className="p-4 w-full">
-          <div className="max-w-4xl mx-auto px-2">
+          <div className="w-full px-2 lg:px-8 transition-all duration-300">
 
             {/* Input box wrapper */}
             <div className={cn(
