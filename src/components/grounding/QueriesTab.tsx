@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, Search, Grid2x2, Plus, Trash2, Pencil, Check, X, Save, Loader2 } from "lucide-react";
+import { ChevronDown, Search, Grid2x2, Plus, Trash2, Pencil, Check, X, Save, Loader2, Database } from "lucide-react";
 import type { QueryRecord } from "./types";
 import { isEditable, apiUpdatePoint, apiDeletePoint, apiInsert } from "./types";
 import { SplitPanelWrapper } from "./SplitDetailPanel";
@@ -135,7 +135,7 @@ const InsertPanelContent = ({ collection, onClose, onSuccess }: { collection: st
       if (collection === "query_memory" && (!record.user_query || record.user_query === "string")) {
         throw new Error('user_query is required. Please provide a valid string.');
       }
-      
+
       await apiInsert(collection, [record], "user_query");
       setTimeout(() => { onSuccess(); onClose(); }, 900);
     } catch (e: any) { setErr(e.message); } finally { setSaving(false); }
@@ -157,15 +157,15 @@ const InsertPanelContent = ({ collection, onClose, onSuccess }: { collection: st
       </div>
 
       {err && <div className="mb-4 text-[11px] font-mono text-destructive bg-destructive/10 border border-destructive/20 rounded px-3 py-1.5">{err}</div>}
-      
+
       <div>
         {Object.entries(record).map(([k, v]) => (
-          <EditableField 
-            key={k} 
-            fieldKey={k} 
-            value={v} 
-            editable={true} 
-            onSave={async (newVal) => handleFieldChange(k, newVal)} 
+          <EditableField
+            key={k}
+            fieldKey={k}
+            value={v}
+            editable={true}
+            onSave={async (newVal) => handleFieldChange(k, newVal)}
           />
         ))}
       </div>
@@ -179,8 +179,9 @@ const QueryRow = ({ d, searchQuery, isSelected, onSelect }: { d: QueryRecord; se
   return (
     <div
       onClick={onSelect}
-      className={`relative group flex flex-col gap-1.5 p-3.5 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden mb-1.5 ${isSelected ? "bg-blue-400/10 border-blue-400/40 shadow-[0_0_20px_rgba(59,130,246,0.1)]" : "bg-card/50 border-border hover:border-blue-400/30 hover:bg-card hover:shadow-lg hover:scale-[1.005]"}`}
+      className={`relative group flex flex-col gap-1.5 p-3.5 rounded-2xl border transition-all duration-400 cursor-pointer overflow-hidden mb-1.5 ${isSelected ? "bg-blue-400/10 border-blue-400/40 shadow-[0_4px_24px_-8px_rgba(59,130,246,0.4)] ring-1 ring-blue-500/20" : "bg-card/40 border-border/50 hover:border-blue-400/30 hover:bg-card/80 hover:shadow-md hover:-translate-y-0.5"}`}
     >
+      <div className={`absolute -right-10 -top-10 w-24 h-24 rounded-full blur-2xl transition-opacity duration-500 ${isSelected ? "bg-blue-400/20 opacity-100" : "bg-blue-400/10 opacity-0 group-hover:opacity-100"}`} />
       <div className={`absolute left-0 top-0 bottom-0 w-1 transition-all duration-300 ${isSelected ? "bg-blue-400" : "bg-transparent group-hover:bg-blue-400/40"}`} />
       <div className="flex items-start gap-2.5">
         <div className="flex-1 min-w-0">
@@ -351,8 +352,8 @@ const QueriesTab = ({ queries: initialQueries, collection, loading, error, onRel
     const makeRow = (d: QueryRecord, i: number) => (
       <QueryRow key={d._doc_id || i} d={d} searchQuery={searchQuery}
         isSelected={selectedId === (d._doc_id || d.query_uuid) && !showInsert}
-        onSelect={() => { 
-          const id = d._doc_id || d.query_uuid || ""; 
+        onSelect={() => {
+          const id = d._doc_id || d.query_uuid || "";
           setSelectedId(selectedId === id ? null : id);
           setShowInsert(false);
         }}
@@ -404,7 +405,7 @@ const QueriesTab = ({ queries: initialQueries, collection, loading, error, onRel
           )}
         </div>
       </div>
-      
+
       {highlightKnowledgeId && (
         <div className="flex items-center gap-2.5 px-3 py-2 bg-blue-400/10 border border-blue-400/30 rounded-lg mb-4 text-[11px] font-mono text-muted-foreground">
           <span>Filtered by knowledge:</span><span className="text-blue-400 flex-1 truncate">{highlightKnowledgeId}</span>
@@ -430,46 +431,78 @@ const QueriesTab = ({ queries: initialQueries, collection, loading, error, onRel
     body: <InsertPanelContent collection={collection} onClose={() => setShowInsert(false)} onSuccess={onReload} />
   } : selectedRecord ? {
     header: (
-      <div className="flex items-start gap-2.5 px-4 py-3.5">
-        <div className="flex-1 min-w-0">
-          {selectedRecord.cluster_id && <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border bg-amber-400/10 border-amber-400/30 text-amber-400 mb-1.5 inline-block">cluster: {selectedRecord.cluster_id}</span>}
-          <p className="text-sm font-semibold text-foreground leading-snug break-words">{String(selectedRecord.user_query || "(no query)")}</p>
-          {(selectedRecord.query_uuid || selectedRecord._doc_id) && <span className="text-[11px] font-mono text-muted-foreground mt-0.5 block truncate">{selectedRecord.query_uuid || selectedRecord._doc_id}</span>}
-          {editable && <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground mt-1 inline-block">user_query locked</span>}
+      <div className="flex items-start gap-3 px-5 py-3.5 relative overflow-hidden bg-card border-b border-border shadow-sm">
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 blur-3xl rounded-full pointer-events-none" />
+
+        <div className="w-8 h-8 rounded-full bg-blue-500/10 border border-blue-500/20 flex flex-shrink-0 items-center justify-center text-blue-500 mt-0.5 relative z-10">
+          <Database size={14} />
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
+
+        <div className="flex-1 min-w-0 relative z-10">
+          <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mb-1.5 text-[10px]">
+            <span className="font-mono font-bold text-blue-500 uppercase tracking-widest">{selectedRecord.query_uuid || selectedRecord._doc_id || "UNKNOWN"}</span>
+            {selectedRecord.cluster_id && (
+              <>
+                <span className="text-muted-foreground/40">•</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border bg-amber-400/10 border-amber-400/30 text-amber-500 inline-block font-semibold">cluster: {selectedRecord.cluster_id}</span>
+              </>
+            )}
+            {editable && (
+              <>
+                <span className="text-muted-foreground/40">•</span>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-secondary/80 border border-border text-muted-foreground inline-block">user_query locked</span>
+              </>
+            )}
+          </div>
+          <p className="text-[13px] font-semibold text-foreground leading-snug break-words pr-6">
+            {String(selectedRecord.user_query || "(no query)")}
+          </p>
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0 relative z-10">
           {editable && (
-            <button onClick={() => setConfirmDeleteId(selectedRecord._doc_id || selectedRecord.query_uuid || "")} className="p-1.5 rounded-md hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors" title="Delete query">
-              <Trash2 className="w-4 h-4" />
+            <button onClick={() => setConfirmDeleteId(selectedRecord._doc_id || selectedRecord.query_uuid || "")} className="p-1.5 rounded-md hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors group" title="Delete query">
+              <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
             </button>
           )}
-          <button onClick={() => setSelectedId(null)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors" title="Close panel">
-            <X className="w-4 h-4" />
+          <button onClick={() => setSelectedId(null)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors group bg-background/50 border border-border/50 shadow-sm" title="Close panel">
+            <X className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
           </button>
         </div>
       </div>
     ),
     body: (
-      <div>
-        {Object.entries(selectedRecord).map(([k, v]) => {
-          const isLocked = k === "user_query" || k === "_doc_id";
-          return (
-            <EditableField
-              key={k}
-              fieldKey={k}
-              value={v}
-              editable={editable && !isLocked}
-              onSave={editable && !isLocked ? async (newVal) => {
-                const docId = selectedRecord._doc_id || selectedRecord.query_uuid || "";
-                const payload: Record<string, unknown> = { ...selectedRecord };
-                delete payload._doc_id;
-                payload[k] = newVal;
-                await apiUpdatePoint(collection, docId, payload);
-                handleFieldUpdated(docId, k, newVal);
-              } : undefined}
-            />
-          );
-        })}
+      <div className="space-y-1 py-2 animate-in fade-in slide-in-from-right-4 duration-500">
+        <div className="px-2 mb-4">
+          <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
+            <div className="px-3 pt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 border-b border-border/40 pb-2 bg-secondary/20">
+              <Database size={12} className="text-blue-500" />
+              Data Record
+            </div>
+            <div className="px-2 pb-2">
+              {Object.entries(selectedRecord).map(([k, v]) => {
+                const isLocked = k === "user_query" || k === "_doc_id";
+                return (
+                  <div key={k} className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both" style={{ animationDelay: `${Object.keys(selectedRecord).indexOf(k) * 20}ms` }}>
+                    <EditableField
+                      fieldKey={k}
+                      value={v}
+                      editable={editable && !isLocked}
+                      onSave={editable && !isLocked ? async (newVal) => {
+                        const docId = selectedRecord._doc_id || selectedRecord.query_uuid || "";
+                        const payload: Record<string, unknown> = { ...selectedRecord };
+                        delete payload._doc_id;
+                        payload[k] = newVal;
+                        await apiUpdatePoint(collection, docId, payload);
+                        handleFieldUpdated(docId, k, newVal);
+                      } : undefined}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
     ),
   } : null;

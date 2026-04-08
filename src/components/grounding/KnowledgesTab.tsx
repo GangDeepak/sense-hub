@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
-import { ChevronDown, Search, Plus, Pencil, Trash2, Check, X, Save, Loader2 } from "lucide-react";
+import { ChevronDown, Search, Plus, Pencil, Trash2, Check, X, Save, Loader2, BookOpen } from "lucide-react";
 import type { KnowledgeRecord } from "./types";
 import { isEditable, apiUpdatePoint, apiDeletePoint, apiInsert } from "./types";
 import { SplitPanelWrapper, FieldBlock } from "./SplitDetailPanel";
@@ -133,8 +133,9 @@ const KnowledgeRow = ({ d, searchQuery, isSelected, onSelect }: {
 }) => (
   <div
     onClick={onSelect}
-    className={`relative group flex flex-col gap-1.5 p-3.5 rounded-xl border transition-all duration-300 cursor-pointer overflow-hidden ${isSelected ? "bg-teal-400/10 border-teal-400/40 shadow-[0_0_20px_rgba(45,212,191,0.1)]" : "bg-card/50 border-border hover:border-teal-400/30 hover:bg-card hover:shadow-lg hover:scale-[1.005]"}`}
+    className={`relative group flex flex-col gap-1.5 p-3.5 rounded-2xl border transition-all duration-400 cursor-pointer overflow-hidden ${isSelected ? "bg-teal-400/10 border-teal-400/40 shadow-[0_4px_24px_-8px_rgba(45,212,191,0.4)] ring-1 ring-teal-500/20" : "bg-card/40 border-border/50 hover:border-teal-400/30 hover:bg-card/80 hover:shadow-md hover:-translate-y-0.5"}`}
   >
+    <div className={`absolute -right-10 -top-10 w-24 h-24 rounded-full blur-2xl transition-opacity duration-500 ${isSelected ? "bg-teal-400/20 opacity-100" : "bg-teal-400/10 opacity-0 group-hover:opacity-100"}`} />
     <div className={`absolute left-0 top-0 bottom-0 w-1 transition-all duration-300 ${isSelected ? "bg-teal-400" : "bg-transparent group-hover:bg-teal-400/40"}`} />
     <div className="flex items-center gap-2.5">
       <div className="flex-1 min-w-0">
@@ -365,50 +366,78 @@ const KnowledgesTab = ({ knowledges: initialKnowledges, collection, loading, err
     body: <InsertPanelContent collection={collection} onClose={() => setShowInsert(false)} onSuccess={onReload} />
   } : selectedRecord ? {
     header: (
-      <div className="flex items-start gap-2.5 px-4 py-3.5">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-0.5">
-            {selectedRecord.type && <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border bg-teal-400/10 border-teal-400/30 text-teal-400">{selectedRecord.type}</span>}
-            <span className="text-sm font-semibold text-foreground leading-snug break-words">{selectedRecord.name || "(unnamed)"}</span>
-          </div>
-          {(selectedRecord.knowledge_id || selectedRecord._doc_id) && (
-            <span className="text-[11px] font-mono text-muted-foreground block truncate">{selectedRecord.knowledge_id || selectedRecord._doc_id}</span>
-          )}
-          {editable && <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-secondary border border-border text-muted-foreground mt-1 inline-block">knowledge_id locked</span>}
+      <div className="flex items-start gap-3 px-5 py-3.5 relative overflow-hidden bg-card border-b border-border shadow-sm">
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-teal-500" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-teal-500/5 blur-3xl rounded-full pointer-events-none" />
+
+        <div className="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/20 flex flex-shrink-0 items-center justify-center text-teal-500 mt-0.5 relative z-10">
+          <BookOpen size={14} />
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
+
+        <div className="flex-1 min-w-0 relative z-10">
+          <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mb-1.5 text-[10px]">
+            <span className="font-mono font-bold text-teal-500 uppercase tracking-widest">{selectedRecord.knowledge_id || selectedRecord._doc_id || "UNKNOWN"}</span>
+            {selectedRecord.type && (
+              <>
+                <span className="text-muted-foreground/40">•</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border bg-teal-400/10 border-teal-400/30 text-teal-500 inline-block font-semibold">{selectedRecord.type}</span>
+              </>
+            )}
+            {editable && (
+              <>
+                <span className="text-muted-foreground/40">•</span>
+                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-secondary/80 border border-border text-muted-foreground inline-block">knowledge_id locked</span>
+              </>
+            )}
+          </div>
+          <p className="text-[13px] font-semibold text-foreground leading-snug break-words pr-6">
+            {selectedRecord.name || "(unnamed)"}
+          </p>
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0 relative z-10">
           {editable && (
-            <button onClick={() => setConfirmDeleteId(selectedRecord._doc_id || selectedRecord.knowledge_id || "")} className="p-1.5 rounded-md hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors" title="Delete">
-              <Trash2 className="w-4 h-4" />
+            <button onClick={() => setConfirmDeleteId(selectedRecord._doc_id || selectedRecord.knowledge_id || "")} className="p-1.5 rounded-md hover:bg-destructive/15 text-muted-foreground hover:text-destructive transition-colors group" title="Delete">
+              <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
             </button>
           )}
-          <button onClick={() => setSelectedId(null)} className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors" title="Close">
-            <X className="w-4 h-4" />
+          <button onClick={() => setSelectedId(null)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors group bg-background/50 border border-border/50 shadow-sm" title="Close">
+            <X className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
           </button>
         </div>
       </div>
     ),
     body: (
-      <div>
-        {Object.entries(selectedRecord).map(([k, v]) => {
-          const isLocked = k === "knowledge_id" || k === "_doc_id" || k === "short_description";
-          return (
-            <EditableField
-              key={k}
-              fieldKey={k}
-              value={v}
-              editable={editable && !isLocked}
-              onSave={editable && !isLocked ? async (newVal) => {
-                const docId = selectedRecord._doc_id || selectedRecord.knowledge_id || "";
-                const payload: Record<string, unknown> = { ...selectedRecord };
-                delete payload._doc_id;
-                payload[k] = newVal;
-                await apiUpdatePoint(collection, docId, payload);
-                handleFieldUpdated(docId, k, newVal);
-              } : undefined}
-            />
-          );
-        })}
+      <div className="space-y-1 py-2 animate-in fade-in slide-in-from-right-4 duration-500">
+        <div className="px-2 mb-4">
+          <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
+            <div className="px-3 pt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 border-b border-border/40 pb-2 bg-secondary/20">
+              <BookOpen size={12} className="text-teal-500" />
+              Knowledge Record
+            </div>
+            <div className="px-2 pb-2">
+              {Object.entries(selectedRecord).map(([k, v]) => {
+                const isLocked = k === "knowledge_id" || k === "_doc_id" || k === "short_description";
+                return (
+                  <div key={k} className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both" style={{ animationDelay: `${Object.keys(selectedRecord).indexOf(k) * 20}ms` }}>
+                    <EditableField
+                      fieldKey={k}
+                      value={v}
+                      editable={editable && !isLocked}
+                      onSave={editable && !isLocked ? async (newVal) => {
+                        const docId = selectedRecord._doc_id || selectedRecord.knowledge_id || "";
+                        const payload: Record<string, unknown> = { ...selectedRecord };
+                        delete payload._doc_id;
+                        payload[k] = newVal;
+                        await apiUpdatePoint(collection, docId, payload);
+                        handleFieldUpdated(docId, k, newVal);
+                      } : undefined}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
     ),
   } : null;
