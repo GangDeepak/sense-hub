@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import type { DashboardData, QueryItem, SenseDevUser } from "./types";
@@ -24,7 +24,7 @@ const QueryCard = ({ q, showElapsed }: { q: QueryItem; showElapsed: boolean }) =
     <div className="bg-card border border-border rounded-lg p-3.5 text-xs leading-relaxed shadow-sm">
       <div className="flex gap-2 mb-1"><span className="text-[9px] tracking-wider text-muted-foreground uppercase font-semibold min-w-[110px]">Ref ID</span><span className="text-primary font-mono text-[10px]">{q.ref_id}</span></div>
       {q.query_id && <div className="flex gap-2 mb-1"><span className="text-[9px] tracking-wider text-muted-foreground uppercase font-semibold min-w-[110px]">Query ID</span><span className="text-foreground font-mono text-[10px]">{q.query_id}</span></div>}
-      <div className="flex gap-2 mb-1"><span className="text-[9px] tracking-wider text-muted-foreground uppercase font-semibold min-w-[110px]">Session Date</span><span className="text-[10px]">{q.session_created || "—"}</span></div>
+      <div className="flex gap-2 mb-1"><span className="text-[9px] tracking-wider text-muted-foreground uppercase font-semibold min-w-[110px]">Session Date</span><span className="text-[10px]">{q.created_at || "—"}</span></div>
       {showElapsed && q.elapsed_s != null && <div className="flex gap-2 mb-1"><span className="text-[9px] tracking-wider text-muted-foreground uppercase font-semibold min-w-[110px]">Elapsed</span><span className="text-amber-600 font-semibold">{q.elapsed_s}s</span></div>}
       <div className="flex gap-2 mb-1"><span className="text-[9px] tracking-wider text-muted-foreground uppercase font-semibold min-w-[110px]">Query</span><span className="text-primary font-medium break-words">{q.query}</span></div>
       <div className="flex gap-2 mb-1">

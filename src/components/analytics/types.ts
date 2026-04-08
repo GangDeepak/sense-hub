@@ -47,7 +47,7 @@ export interface SenseDevUser {
 export interface QueryItem {
   ref_id: string;
   query_id?: string;
-  session_created?: string;
+  created_at?: string;
   elapsed_s?: number;
   query: string;
   response_data: string;

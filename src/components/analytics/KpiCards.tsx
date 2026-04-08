@@ -1,8 +1,29 @@
 import type { DashboardData } from "./types";
+import { Users, MessageSquareText, ThumbsUp, Timer, ChevronRight } from "lucide-react";
 
 interface KpiCardsProps {
   data: DashboardData;
 }
+
+const StatCard = ({ title, value, icon: Icon, colorClass, gradientClass, children }: any) => (
+  <div className="bg-card/60 backdrop-blur-sm border border-border/40 rounded-2xl p-5 shadow-sm relative overflow-hidden group hover:border-border/80 transition-all duration-500 hover:shadow-md hover:-translate-y-0.5">
+    <div className={`absolute -right-8 -top-8 w-32 h-32 rounded-full blur-3xl opacity-10 group-hover:opacity-20 transition-opacity duration-500 ${gradientClass}`} />
+    
+    <div className="flex justify-between items-start mb-2 relative z-10">
+      <div className="text-[11px] tracking-widest text-muted-foreground uppercase font-bold">{title}</div>
+      <div className={`p-2 rounded-xl bg-background/50 border border-border/50 shadow-sm backdrop-blur-md ${colorClass}`}>
+        <Icon size={16} />
+      </div>
+    </div>
+    
+    <div className="relative z-10">
+       <div className={`text-4xl font-extrabold tracking-tight mb-4 ${colorClass}`}>{value}</div>
+       <div className="flex flex-col gap-2">
+         {children}
+       </div>
+    </div>
+  </div>
+);
 
 const KpiCards = ({ data }: KpiCardsProps) => {
   const qs = data.q_stats || { min_per_user: 0, median_per_user: 0, max_per_user: 0, min_per_session: 0, median_per_session: 0, max_per_session: 0 };
@@ -10,75 +31,87 @@ const KpiCards = ({ data }: KpiCardsProps) => {
   const totalRated = (data.overall_accuracy?.[0]?.value || 0) + (data.overall_accuracy?.[1]?.value || 0);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Total Users */}
-      <div className="bg-card border border-border rounded-xl p-4 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-primary" />
-        <div className="text-[10px] tracking-wider text-muted-foreground uppercase font-semibold mb-2">Total Users</div>
-        <div className="text-3xl font-bold text-primary">{data.total_users || 0}</div>
-        <div className="mt-2 flex flex-col gap-1">
-          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-blue-100 border border-blue-300 text-blue-700 w-fit">
-            @velocityrisk.com <strong>{data.velocity_count || 0}</strong>
-          </span>
-          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-purple-100 border border-purple-300 text-purple-700 w-fit">
-            @bluepond.ai <strong>{data.bluepond_count || 0}</strong>
-          </span>
+      <StatCard 
+        title="Total Users" 
+        value={data.total_users || 0} 
+        icon={Users} 
+        colorClass="text-blue-500" 
+        gradientClass="bg-blue-500"
+      >
+        <div className="flex items-center justify-between text-xs py-1 px-2.5 rounded-lg bg-blue-500/10 text-blue-600 border border-blue-500/20">
+          <span className="font-medium">@velocityrisk.com</span>
+          <span className="font-bold">{data.velocity_count || 0}</span>
         </div>
-      </div>
+        <div className="flex items-center justify-between text-xs py-1 px-2.5 rounded-lg bg-purple-500/10 text-purple-600 border border-purple-500/20">
+          <span className="font-medium">@bluepond.ai</span>
+          <span className="font-bold">{data.bluepond_count || 0}</span>
+        </div>
+      </StatCard>
 
       {/* Total Queries */}
-      <div className="bg-card border border-border rounded-xl p-4 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "hsl(217 91% 46%)" }} />
-        <div className="text-[10px] tracking-wider text-muted-foreground uppercase font-semibold mb-2">Total Queries</div>
-        <div className="text-3xl font-bold" style={{ color: "hsl(217 91% 46%)" }}>{data.total_queries || 0}</div>
-        <div className="mt-2 border-t border-border pt-2">
-          <div className="text-[9px] tracking-wider text-primary uppercase font-bold mb-1">Per User</div>
-          {[["Min", qs.min_per_user], ["Median", qs.median_per_user], ["Max", qs.max_per_user]].map(([l, v]) => (
-            <div key={l as string} className="flex justify-between text-[11px] text-muted-foreground"><span>{l}</span><span className="text-foreground font-medium">{v}</span></div>
-          ))}
-          <div className="h-px bg-border my-1.5" />
-          <div className="text-[9px] tracking-wider text-primary uppercase font-bold mb-1">Per Session</div>
-          {[["Min", qs.min_per_session], ["Median", qs.median_per_session], ["Max", qs.max_per_session]].map(([l, v]) => (
-            <div key={l as string} className="flex justify-between text-[11px] text-muted-foreground"><span>{l}</span><span className="text-foreground font-medium">{v}</span></div>
+      <StatCard 
+        title="Total Queries" 
+        value={data.total_queries || 0} 
+        icon={MessageSquareText} 
+        colorClass="text-indigo-500" 
+        gradientClass="bg-indigo-500"
+      >
+        <div className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mt-1 mb-0.5 flex items-center gap-1">
+          <ChevronRight size={10} className="text-indigo-500" /> Per User
+        </div>
+        <div className="grid grid-cols-3 gap-1">
+          {[["Min", qs.min_per_user], ["Med", qs.median_per_user], ["Max", qs.max_per_user]].map(([l, v]) => (
+            <div key={l as string} className="flex flex-col items-center p-1.5 rounded-md bg-secondary/50 border border-border/50">
+              <span className="text-[9px] text-muted-foreground uppercase">{l}</span>
+              <span className="text-xs font-bold text-foreground">{v}</span>
+            </div>
           ))}
         </div>
-      </div>
+      </StatCard>
 
       {/* Feedback */}
-      <div className="bg-card border border-border rounded-xl p-4 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "hsl(160 84% 39%)" }} />
-        <div className="text-[10px] tracking-wider text-muted-foreground uppercase font-semibold mb-2">Feedback</div>
-        <div className="text-3xl font-bold" style={{ color: "hsl(160 84% 39%)" }}>{totalRated}</div>
-        <div className="mt-2 flex flex-col gap-1">
-          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-green-100 border border-green-300 text-green-700 w-fit">
-            👍 Positive <strong>{data.overall_accuracy?.[0]?.value || 0}</strong>
-          </span>
-          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-red-100 border border-red-300 text-red-700 w-fit">
-            👎 Negative <strong>{data.overall_accuracy?.[1]?.value || 0}</strong>
-          </span>
-          <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-secondary border border-border text-muted-foreground w-fit">
-            — No Feedback <strong>{data.overall_accuracy?.[2]?.value || 0}</strong>
-          </span>
+      <StatCard 
+        title="Feedback Rate" 
+        value={totalRated} 
+        icon={ThumbsUp} 
+        colorClass="text-teal-500" 
+        gradientClass="bg-teal-500"
+      >
+        <div className="flex items-center justify-between text-xs py-1 px-2.5 rounded-lg bg-teal-500/10 text-teal-600 border border-teal-500/20">
+          <span className="font-medium">👍 Positive</span>
+          <span className="font-bold">{data.overall_accuracy?.[0]?.value || 0}</span>
         </div>
-      </div>
+        <div className="flex items-center justify-between text-xs py-1 px-2.5 rounded-lg bg-rose-500/10 text-rose-600 border border-rose-500/20">
+          <span className="font-medium">👎 Negative</span>
+          <span className="font-bold">{data.overall_accuracy?.[1]?.value || 0}</span>
+        </div>
+        <div className="flex justify-end pr-1 opacity-60">
+           <span className="text-[9px] text-muted-foreground">— No Feedback: {data.overall_accuracy?.[2]?.value || 0}</span>
+        </div>
+      </StatCard>
 
       {/* Median Response Time */}
-      <div className="bg-card border border-border rounded-xl p-4 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-foreground" />
-        <div className="text-[10px] tracking-wider text-muted-foreground uppercase font-semibold mb-2">Median Response Time</div>
-        <div className="text-3xl font-bold text-foreground">{rt.median}<span className="text-sm font-normal text-muted-foreground">s</span></div>
-        <div className="mt-2 border-t border-border pt-2">
-          <div className="text-[9px] tracking-wider text-muted-foreground uppercase font-bold mb-1">Per User</div>
-          {[["Min", rt.per_user.min], ["Median", rt.per_user.median], ["Max", rt.per_user.max]].map(([l, v]) => (
-            <div key={l as string} className="flex justify-between text-[11px] text-muted-foreground"><span>{l}</span><span className="text-foreground font-medium">{v}s</span></div>
-          ))}
-          <div className="h-px bg-border my-1.5" />
-          <div className="text-[9px] tracking-wider text-muted-foreground uppercase font-bold mb-1">Per Session</div>
-          {[["Min", rt.per_session.min], ["Median", rt.per_session.median], ["Max", rt.per_session.max]].map(([l, v]) => (
-            <div key={l as string} className="flex justify-between text-[11px] text-muted-foreground"><span>{l}</span><span className="text-foreground font-medium">{v}s</span></div>
+      <StatCard 
+        title="Avg Latency" 
+        value={`${rt.median}s`} 
+        icon={Timer} 
+        colorClass="text-amber-500" 
+        gradientClass="bg-amber-500"
+      >
+        <div className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground mt-1 mb-0.5 flex items-center gap-1">
+          <ChevronRight size={10} className="text-amber-500" /> Per User
+        </div>
+        <div className="grid grid-cols-3 gap-1">
+          {[["Min", rt.per_user.min], ["Med", rt.per_user.median], ["Max", rt.per_user.max]].map(([l, v]) => (
+             <div key={l as string} className="flex flex-col items-center p-1.5 rounded-md bg-secondary/50 border border-border/50">
+              <span className="text-[9px] text-muted-foreground uppercase">{l}</span>
+              <span className="text-xs font-bold text-foreground">{v}s</span>
+            </div>
           ))}
         </div>
-      </div>
+      </StatCard>
     </div>
   );
 };

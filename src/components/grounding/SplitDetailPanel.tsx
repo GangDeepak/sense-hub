@@ -90,7 +90,7 @@ export const SplitPanelWrapper = ({ listPane, detail, listPaneClassName = "overf
 
       {/* Right — detail panel */}
       <div
-        className="flex-shrink-0 flex flex-col border-l border-border bg-card/60 backdrop-blur-md overflow-hidden shadow-[-8px_0_24px_-4px_rgba(0,0,0,0.15)] z-20"
+        className="flex-shrink-0 flex flex-col border-l border-border bg-card/60 backdrop-blur-md overflow-hidden shadow-[-8px_0_24px_-4px_rgba(0,0,0,0.15)] z-20 animate-in slide-in-from-right-16 fade-in duration-500 ease-out"
         style={{ width: rightWidth }}
       >
         {/* Sticky header */}
@@ -109,8 +109,8 @@ export const SplitPanelWrapper = ({ listPane, detail, listPaneClassName = "overf
 // ── Generic Field Renderer (re-exported for reuse) ────────────────────────────
 
 // ── Safe FieldBlock Component ─────────────────────────────────────────────────
-export const FieldBlock = ({ label, value }: { label: string; value: unknown }) => {
-  const [open, setOpen] = useState(true);
+export const FieldBlock = ({ label, value, defaultOpen = true }: { label: string; value: unknown; defaultOpen?: boolean }) => {
+  const [open, setOpen] = useState(defaultOpen);
 
   const isComplex =
     (typeof value === "object" && value !== null) ||
@@ -171,7 +171,27 @@ export const FieldBlock = ({ label, value }: { label: string; value: unknown }) 
         <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {open && <div className="mt-2">{renderVal(value)}</div>}
+      {open && <div className="mt-2 animate-in fade-in slide-in-from-top-2 duration-300 ease-out">{renderVal(value)}</div>}
+    </div>
+  );
+};
+
+export const SectionBlock = ({ label, children, defaultOpen = false }: { label: string; children: React.ReactNode; defaultOpen?: boolean }) => {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div className="py-3 border-b border-border/60 last:border-0">
+      <button
+        className="flex items-center justify-between w-full text-left group"
+        onClick={() => setOpen((p) => !p)}
+      >
+        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest group-hover:text-foreground transition-colors">
+          {label}
+        </span>
+        <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && <div className="mt-2 border-l-2 border-border/40 pl-3 ml-1 animate-in fade-in slide-in-from-top-2 duration-300 ease-out">{children}</div>}
     </div>
   );
 };
