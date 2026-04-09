@@ -5,17 +5,17 @@ export interface DashboardData {
   bluepond_count: number;
   q_stats: {
     min_per_user: number;
-    median_per_user: number;
+    avg_per_user: number;
     max_per_user: number;
     min_per_session: number;
-    median_per_session: number;
+    avg_per_session: number;
     max_per_session: number;
   };
   overall_accuracy: { label: string; value: number }[];
   response_time: {
-    median: number;
-    per_user: { min: number; median: number; max: number };
-    per_session: { min: number; median: number; max: number };
+    avg: number;
+    per_user: { min: number; avg: number; max: number };
+    per_session: { min: number; avg: number; max: number };
   };
   time_series: { date: string; count: number }[];
   q_per_user: { user: string; count: number }[];

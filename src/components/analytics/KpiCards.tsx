@@ -26,8 +26,8 @@ const StatCard = ({ title, value, icon: Icon, colorClass, gradientClass, childre
 );
 
 const KpiCards = ({ data }: KpiCardsProps) => {
-  const qs = data.q_stats || { min_per_user: 0, median_per_user: 0, max_per_user: 0, min_per_session: 0, median_per_session: 0, max_per_session: 0 };
-  const rt = data.response_time || { median: 0, per_user: { min: 0, median: 0, max: 0 }, per_session: { min: 0, median: 0, max: 0 } };
+  const qs = data.q_stats || { min_per_user: 0, avg_per_user: 0, max_per_user: 0, min_per_session: 0, avg_per_session: 0, max_per_session: 0 };
+  const rt = data.response_time || { avg: 0, per_user: { min: 0, avg: 0, max: 0 }, per_session: { min: 0, avg: 0, max: 0 } };
   const totalRated = (data.overall_accuracy?.[0]?.value || 0) + (data.overall_accuracy?.[1]?.value || 0);
 
   return (
@@ -62,7 +62,7 @@ const KpiCards = ({ data }: KpiCardsProps) => {
           <ChevronRight size={10} className="text-indigo-500" /> Per User
         </div>
         <div className="grid grid-cols-3 gap-1">
-          {[["Min", qs.min_per_user], ["Med", qs.median_per_user], ["Max", qs.max_per_user]].map(([l, v]) => (
+          {[["Min", qs.min_per_user], ["Avg", qs.avg_per_user], ["Max", qs.max_per_user]].map(([l, v]) => (
             <div key={l as string} className="flex flex-col items-center p-1.5 rounded-md bg-secondary/50 border border-border/50">
               <span className="text-[9px] text-muted-foreground uppercase">{l}</span>
               <span className="text-xs font-bold text-foreground">{v}</span>
@@ -95,7 +95,7 @@ const KpiCards = ({ data }: KpiCardsProps) => {
       {/* Median Response Time */}
       <StatCard 
         title="Avg Latency" 
-        value={`${rt.median}s`} 
+        value={`${rt.avg}s`} 
         icon={Timer} 
         colorClass="text-amber-500" 
         gradientClass="bg-amber-500"
@@ -104,7 +104,7 @@ const KpiCards = ({ data }: KpiCardsProps) => {
           <ChevronRight size={10} className="text-amber-500" /> Per User
         </div>
         <div className="grid grid-cols-3 gap-1">
-          {[["Min", rt.per_user.min], ["Med", rt.per_user.median], ["Max", rt.per_user.max]].map(([l, v]) => (
+          {[["Min", rt.per_user.min], ["Avg", rt.per_user.avg], ["Max", rt.per_user.max]].map(([l, v]) => (
              <div key={l as string} className="flex flex-col items-center p-1.5 rounded-md bg-secondary/50 border border-border/50">
               <span className="text-[9px] text-muted-foreground uppercase">{l}</span>
               <span className="text-xs font-bold text-foreground">{v}s</span>
