@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 export interface InsuredItem {
   ref_id: string;
@@ -24,6 +24,7 @@ interface GradioDemoContextType {
   sessions: { session_uuid: string; created_at?: string; session_name?: string; version?: string }[];
   setSessions: (s: { session_uuid: string; created_at?: string; session_name?: string; version?: string }[]) => void;
   updateSessionName: (sessionId: string, name: string) => void;
+  referenceQueries: any[];
 }
 
 const GradioDemoContext = createContext<GradioDemoContextType | undefined>(undefined);
@@ -34,6 +35,39 @@ export function GradioDemoProvider({ children }: { children: ReactNode }) {
   const [sessions, setSessions] = useState<{ session_uuid: string; created_at?: string; session_name?: string; version?: string }[]>([]);
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+
+  const [referenceQueries, setReferenceQueries] = useState<any[]>([]);
+
+  const fetchReferenceQueries = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/grounding/all_query/query_memory_test?with_vectors=false`);
+      if (!res.ok) return;
+      const data = await res.json();
+      
+      // The endpoint returns Qdrant-style points with data in .payload
+      const rawPoints = Array.isArray(data) ? data : (data.queries || data.points || []);
+      const normalized = rawPoints.map((item: any) => {
+        if (item && typeof item === "object" && item.payload) {
+          return { ...item.payload, _doc_id: item.id };
+        }
+        return item;
+      });
+      
+      setReferenceQueries(normalized);
+    } catch (err) {
+      console.error("Failed to fetch reference queries:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchReferenceQueries();
+  }, []);
+
+  useEffect(() => {
+    if (referenceQueries.length > 0) {
+      console.log(`[GradioDemoContext] Successfully fetched ${referenceQueries.length} reference queries.`);
+    }
+  }, [referenceQueries]);
 
   const updateSessionName = (sid: string, name: string) => {
     const trimmed = name.slice(0, 50);
@@ -56,7 +90,7 @@ export function GradioDemoProvider({ children }: { children: ReactNode }) {
 
   return (
     <GradioDemoContext.Provider
-      value={{ selectedInsured, setSelectedInsured, sessionId, setSessionId, sessions, setSessions, updateSessionName }}
+      value={{ selectedInsured, setSelectedInsured, sessionId, setSessionId, sessions, setSessions, updateSessionName, referenceQueries }}
     >
       {children}
     </GradioDemoContext.Provider>

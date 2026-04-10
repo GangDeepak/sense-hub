@@ -150,7 +150,11 @@ const OverviewTab = ({
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                   <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" width={120} />
-                  <Tooltip contentStyle={{ fontSize: 11, background: "rgba(15, 17, 21, 0.9)", border: "1px solid hsl(var(--border))", borderRadius: "8px", backdropFilter: "blur(8px)" }} />
+                  <Tooltip 
+                    cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
+                    contentStyle={{ fontSize: 11, background: "rgba(255, 255, 255, 0.95)", border: "1px solid hsl(var(--border))", borderRadius: "8px", backdropFilter: "blur(8px)", color: "#111827" }} 
+                    itemStyle={{ color: "#111827" }}
+                  />
                   <Bar dataKey="value" radius={[0, 3, 3, 0]}>
                     {tagChartData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                   </Bar>
@@ -166,7 +170,11 @@ const OverviewTab = ({
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                   <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip contentStyle={{ fontSize: 11, background: "rgba(15, 17, 21, 0.9)", border: "1px solid hsl(var(--border))", borderRadius: "8px", backdropFilter: "blur(8px)" }} />
+                  <Tooltip 
+                    cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
+                    contentStyle={{ fontSize: 11, background: "rgba(255, 255, 255, 0.95)", border: "1px solid hsl(var(--border))", borderRadius: "8px", backdropFilter: "blur(8px)", color: "#111827" }} 
+                    itemStyle={{ color: "#111827" }}
+                  />
                   <Bar dataKey="value" radius={[3, 3, 0, 0]}>
                     {kBucketData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                   </Bar>
@@ -190,7 +198,11 @@ const OverviewTab = ({
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                       <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                       <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" width={100} />
-                      <Tooltip contentStyle={{ fontSize: 11, background: "rgba(15, 17, 21, 0.9)", border: "1px solid hsl(var(--border))", borderRadius: "8px", backdropFilter: "blur(8px)" }} />
+                      <Tooltip 
+                        cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
+                        contentStyle={{ fontSize: 11, background: "rgba(255, 255, 255, 0.95)", border: "1px solid hsl(var(--border))", borderRadius: "8px", backdropFilter: "blur(8px)", color: "#111827" }} 
+                        itemStyle={{ color: "#111827" }}
+                      />
                       <Bar dataKey="value" radius={[0, 3, 3, 0]}>
                         {apiTagData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                       </Bar>

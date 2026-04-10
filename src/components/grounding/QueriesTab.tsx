@@ -300,12 +300,19 @@ const QueriesTab = ({ queries: initialQueries, collection, loading, error, onRel
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    return queries.filter((d) => {
+    const result = queries.filter((d) => {
       if (q && !String(d.user_query || "").toLowerCase().includes(q) && !String(d.query_uuid || "").toLowerCase().includes(q)) return false;
       if (activeTag && !(d.intent_tags || []).includes(activeTag)) return false;
       if (activeKnowledge !== null) { const kc = Array.isArray(d.knowledge) ? d.knowledge.length : 0; if (activeKnowledge === 6 ? kc < 6 : kc !== activeKnowledge) return false; }
       if (highlightKnowledgeId && !(d.knowledge_ids || []).includes(highlightKnowledgeId)) return false;
       return true;
+    });
+
+    // Sort by Time: Latest First
+    return result.sort((a, b) => {
+      const timeA = a.created_at ? new Date(a.created_at as string).getTime() : 0;
+      const timeB = b.created_at ? new Date(b.created_at as string).getTime() : 0;
+      return timeB - timeA;
     });
   }, [queries, searchQuery, activeTag, activeKnowledge, highlightKnowledgeId]);
 

@@ -182,12 +182,19 @@ const QueryAnalytics = ({ data }: { data: DashboardData | null }) => {
       return matchSearch && matchUser && matchBucket && matchRating;
     });
 
-    // Sort by Rating: Like > Dislike > No Rating
+    // Sort by Time: Latest First (Primary), then Rating (Secondary)
     result.sort((a, b) => {
+      const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      
+      if (timeB !== timeA) {
+        return timeB - timeA;
+      }
+
       const order = { like: 3, dislike: 2, undefined: 1, null: 1 };
       const scoreA = order[a.rating as keyof typeof order] || 1;
       const scoreB = order[b.rating as keyof typeof order] || 1;
-      return scoreB - scoreA; // Higher rating first
+      return scoreB - scoreA;
     });
 
     return result;

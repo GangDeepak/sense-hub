@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import FilterBar from "@/components/analytics/FilterBar";
 import ChatOverview from "@/components/analytics/ChatOverview";
 import QueryAnalytics from "@/components/analytics/QueryAnalytics";
@@ -9,10 +9,7 @@ import { getAuthHeaders } from "@/utils/token";
 const API_BASE = "http://127.0.0.1:8000/api";
 
 const ChatAnalytics = () => {
-  const [data, setData] = useState<DashboardData | null>(() => {
-    const saved = localStorage.getItem("analytics_data");
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "query" | "faq">(() => {
@@ -21,11 +18,15 @@ const ChatAnalytics = () => {
   });
   
   const [persistedFilters, setPersistedFilters] = useState<FilterState | undefined>(() => {
-    const saved = localStorage.getItem("analytics_filters");
-    return saved ? JSON.parse(saved) : undefined;
+    try {
+      const saved = localStorage.getItem("analytics_filters");
+      return saved ? JSON.parse(saved) : undefined;
+    } catch {
+      return undefined;
+    }
   });
 
-  const handleApply = async (filters: FilterState) => {
+  const handleApply = useCallback(async (filters: FilterState) => {
     setLoading(true);
     setError(null);
     try {
@@ -39,15 +40,30 @@ const ChatAnalytics = () => {
       const d = await r.json();
       console.log("Received data:", d);
       setData(d);
-      localStorage.setItem("analytics_data", JSON.stringify(d));
-      localStorage.setItem("analytics_filters", JSON.stringify(filters));
+      
+      try {
+        localStorage.setItem("analytics_filters", JSON.stringify(filters));
+      } catch (e) {
+        console.warn("Failed to persist filters to localStorage", e);
+      }
+      
       setPersistedFilters(filters);
     } catch (e: any) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Cleanup large data key if it exists to free up quota
+    localStorage.removeItem("analytics_data");
+
+    // Auto-fetch on mount if we have persisted filters but no data yet
+    if (persistedFilters && !data && !loading) {
+      handleApply(persistedFilters);
+    }
+  }, []);
 
   const tabs = [
     { id: "overview", label: "Overview" },
@@ -57,7 +73,11 @@ const ChatAnalytics = () => {
 
   const handleTabChange = (id: "overview" | "query" | "faq") => {
     setActiveTab(id);
-    localStorage.setItem("analytics_active_tab", id);
+    try {
+      localStorage.setItem("analytics_active_tab", id);
+    } catch (e) {
+      console.warn("Failed to persist active tab to localStorage", e);
+    }
   };
 
   return (

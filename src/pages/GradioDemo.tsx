@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Bot, User, Loader2, Copy, ThumbsUp, ThumbsDown, Mail, Boxes, X, Check, Globe, Building2 } from "lucide-react";
+import { Send, Bot, User, Loader2, Copy, ThumbsUp, ThumbsDown, Mail, Boxes, X, Check, Globe, Building2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -404,9 +404,10 @@ function AssistantMessage({
 // ── Main GradioDemo component ────────────────────────────────────────────────
 
 const GradioDemo = () => {
-  const { selectedInsured, sessionId, updateSessionName } = useGradioDemo();
+  const { selectedInsured, sessionId, updateSessionName, referenceQueries } = useGradioDemo();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [webSearch, setWebSearch] = useState(false);
   // activeDetail: which message index's module/email panel is open
@@ -437,7 +438,6 @@ const GradioDemo = () => {
       observer.observe(content);
     }
 
-    return () => observer.disconnect();
   }, [messages]);
 
   // Load chat history when session changes
@@ -702,6 +702,67 @@ const GradioDemo = () => {
     }
   }, [input, isStreaming, messages, selectedInsured, sessionId]);
 
+  // ── Similarity Matcher ─────────────────────────────────────────────────────
+  const getSimilarity = (inputStr: string, refStr: string) => {
+    const input = inputStr.toLowerCase().trim();
+    const ref = refStr.toLowerCase().trim();
+    if (!input || !ref) return 0;
+    if (input === ref) return 1.1; // Bonus for exact match
+    
+    // 1. Check for immediate substring/prefix matching (High priority)
+    if (ref.startsWith(input)) return 0.9 + (input.length / ref.length);
+    if (ref.includes(input)) return 0.7 + (input.length / ref.length);
+
+    // 2. Dice Coefficient for fuzzy matching
+    const left = input.replace(/\s+/g, "");
+    const right = ref.replace(/\s+/g, "");
+    if (left.length < 2 || right.length < 2) return 0;
+
+    const leftBigrams = new Map();
+    for (let i = 0; i < left.length - 1; i++) {
+        const bigram = left.substring(i, i + 2);
+        const count = leftBigrams.get(bigram) ?? 0;
+        leftBigrams.set(bigram, count + 1);
+    }
+
+    let intersectionSize = 0;
+    for (let i = 0; i < right.length - 1; i++) {
+        const bigram = right.substring(i, i + 2);
+        const count = leftBigrams.get(bigram) ?? 0;
+        if (count > 0) {
+            leftBigrams.set(bigram, count - 1);
+            intersectionSize++;
+        }
+    }
+
+    return (2.0 * intersectionSize) / (left.length + right.length - 2);
+  };
+
+  useEffect(() => {
+    const trimmed = input.trim();
+    if (trimmed.length < 2 || referenceQueries.length === 0) {
+      setSuggestions([]);
+      return;
+    }
+
+    const matches = referenceQueries
+      .map((q: any) => ({
+        ...q,
+        score: getSimilarity(trimmed, q.user_query || ""),
+      }))
+      .filter((q: any) => q.score > 0.2) // More lenient threshold
+      .sort((a: any, b: any) => b.score - a.score)
+      .slice(0, 5);
+
+    setSuggestions(matches);
+  }, [input, referenceQueries]);
+
+  const handleSelectSuggestion = (text: string) => {
+    setInput(text);
+    setSuggestions([]);
+    textareaRef.current?.focus();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -794,6 +855,32 @@ const GradioDemo = () => {
                 : "bg-secondary/30 focus-within:bg-background focus-within:border-border/80",
               selectedInsured && webSearch && "border-blue-500/30"
             )}>
+
+              {/* Suggestions Panel */}
+              {suggestions.length > 0 && (
+                <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 p-1.5 bg-card/90 backdrop-blur-xl border border-border/40 rounded-xl shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-2 duration-300 z-[100]">
+                  <div className="flex items-center gap-2 px-2.5 mb-1.5 pt-1">
+                     <Search className="w-3 h-3 text-primary opacity-60" />
+                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Suggested Queries</span>
+                  </div>
+                  <div className="space-y-0.5 max-h-[220px] overflow-y-auto custom-scrollbar">
+                    {suggestions.map((s, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSelectSuggestion(s.user_query)}
+                        className="w-full text-left px-2.5 py-2 text-xs rounded-lg hover:bg-primary/10 hover:text-primary transition-all duration-200 group flex items-center justify-between border border-transparent hover:border-primary/20"
+                      >
+                        <span className="truncate flex-1 pr-4 font-medium opacity-90 group-hover:opacity-100">{s.user_query}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[9px] font-mono text-muted-foreground opacity-40 group-hover:opacity-70">{(s.score * 100).toFixed(0)}%</span>
+                          <Send className="w-2.5 h-2.5 opacity-0 group-hover:opacity-40 transition-opacity" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* No insured selected — amber warning banner */}
               {!selectedInsured && (
