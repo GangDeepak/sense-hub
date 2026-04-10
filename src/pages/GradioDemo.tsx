@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import { useGradioDemo } from "@/contexts/GradioDemoContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -404,6 +405,7 @@ function AssistantMessage({
 // ── Main GradioDemo component ────────────────────────────────────────────────
 
 const GradioDemo = () => {
+  const { user } = useAuth();
   const { selectedInsured, sessionId, updateSessionName, referenceQueries } = useGradioDemo();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -442,12 +444,17 @@ const GradioDemo = () => {
 
   // Load chat history when session changes
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionId || sessionId === "default_session") {
+      setMessages([]);
+      return;
+    }
     setMessages([]);
     setActiveDetail(null);
     (async () => {
+      if (!user?.email) return;
       try {
-        const res = await fetch(`${API_BASE}/gradio_demo/chats/${sessionId}`);
+        const emailStr = encodeURIComponent(user.email);
+        const res = await fetch(`${API_BASE}/gradio_demo/chats/${sessionId}?email=${emailStr}`);
         if (!res.ok) return;
         const data = await res.json();
         const loaded: ChatMessage[] = [];
@@ -562,6 +569,7 @@ const GradioDemo = () => {
 
     try {
       const history = messages.map((m) => ({ role: m.role, content: m.content }));
+      if (!user?.email) throw new Error("User email is required to send messages");
 
       const res = await fetch(`${API_BASE}/gradio_demo/stream`, {
         method: "POST",
@@ -569,6 +577,7 @@ const GradioDemo = () => {
         body: JSON.stringify({
           text,
           session_id: sessionId || "default_session",
+          email: user.email,
           query_id: crypto.randomUUID(),
           chat_history: history,
           insured_name: selectedInsured?.insured_name || "",

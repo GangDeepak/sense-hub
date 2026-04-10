@@ -64,7 +64,9 @@ export function AppSidebar() {
   );
 
   const fetchSessions = async () => {
-    const res = await fetch(`${API_BASE}/gradio_demo/sessions`);
+    if (!user?.email) return [];
+    const emailStr = encodeURIComponent(user.email);
+    const res = await fetch(`${API_BASE}/gradio_demo/sessions?email=${emailStr}`);
     if (!res.ok) return [];
     const data = await res.json();
     return data.sessions || [];
@@ -72,11 +74,16 @@ export function AppSidebar() {
 
   // Fetch sessions when on gradio page
   useEffect(() => {
-    if (!isOnGradio || !gradio) return;
+    if (!isOnGradio || !gradio || !user?.email) return;
     (async () => {
       try {
         const list = await fetchSessions();
         gradio.setSessions(list);
+        
+        // Auto-select latest session if none is active
+        if (!gradio.sessionId && list.length > 0) {
+          gradio.setSessionId(list[0].session_uuid);
+        }
       } catch {
         // ignore
       }
@@ -123,7 +130,9 @@ export function AppSidebar() {
                   const newId = crypto.randomUUID();
                   gradio.setSessionId(newId);
 
-                  fetch(`${API_BASE}/gradio_demo/session/${newId}`, {
+                  if (!user?.email) return;
+                  const emailStr = encodeURIComponent(user.email);
+                  fetch(`${API_BASE}/gradio_demo/session/${newId}?email=${emailStr}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ session_name: "New Chat" }),
@@ -169,59 +178,62 @@ export function AppSidebar() {
               </div>
             </SidebarGroupContent>
 
-            <SidebarGroupLabel className="text-xs text-muted-foreground">
-              <History className="mr-1.5 h-3 w-3" />
-              Chat History
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {sessions.length === 0 && (
-                  <p className="px-3 py-1 text-xs text-muted-foreground">No sessions yet</p>
-                )}
-                {sessions.map((s) => (
-                  <SidebarMenuItem key={s.session_uuid}>
-                    <div className="flex items-center w-full">
-                      <SidebarMenuButton
-                        onClick={() => gradio.setSessionId(s.session_uuid)}
-                        className={`flex-1 text-xs ${gradio.sessionId === s.session_uuid ? "bg-accent text-primary font-medium" : ""}`}
-                      >
-                        <MessageSquare className="mr-2 h-3 w-3" />
-                        <span className="truncate">{s.session_name || s.session_uuid.slice(0, 12) + "..."}</span>
-                      </SidebarMenuButton>
+            {sessions.length > 0 && (
+              <>
+                <SidebarGroupLabel className="text-xs text-muted-foreground">
+                  <History className="mr-1.5 h-3 w-3" />
+                  Chat History
+                </SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {sessions.map((s) => (
+                      <SidebarMenuItem key={s.session_uuid}>
+                        <div className="flex items-center w-full">
+                          <SidebarMenuButton
+                            onClick={() => gradio.setSessionId(s.session_uuid)}
+                            className={`flex-1 text-xs ${gradio.sessionId === s.session_uuid ? "bg-accent text-primary font-medium" : ""}`}
+                          >
+                            <MessageSquare className="mr-2 h-3 w-3" />
+                            <span className="truncate">{s.session_name || s.session_uuid.slice(0, 12) + "..."}</span>
+                          </SidebarMenuButton>
 
-                      <button
-                        type="button"
-                        aria-label="Delete session"
-                        className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
+                          <button
+                            type="button"
+                            aria-label="Delete session"
+                            className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
 
-                          const ok = window.confirm("Delete this session? This cannot be undone.");
-                          if (!ok) return;
+                              const ok = window.confirm("Delete this session? This cannot be undone.");
+                              if (!ok) return;
 
-                          try {
-                            const res = await fetch(`${API_BASE}/gradio_demo/session/${s.session_uuid}`, { method: "DELETE" });
-                            if (!res.ok) return;
+                              if (!user?.email) return;
+                              try {
+                                const emailStr = encodeURIComponent(user.email);
+                                const res = await fetch(`${API_BASE}/gradio_demo/session/${s.session_uuid}?email=${emailStr}`, { method: "DELETE" });
+                                if (!res.ok) return;
 
-                            const list = await fetchSessions();
-                            gradio.setSessions(list);
+                                const list = await fetchSessions();
+                                gradio.setSessions(list);
 
-                            if (gradio.sessionId === s.session_uuid) {
-                              gradio.setSessionId(list[0]?.session_uuid || "default_session");
-                            }
-                          } catch {
-                            // ignore
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
+                                if (gradio.sessionId === s.session_uuid) {
+                                  gradio.setSessionId(list[0]?.session_uuid || "default_session");
+                                }
+                              } catch {
+                                // ignore
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </>
+            )}
           </SidebarGroup>
         )}
       </SidebarContent>

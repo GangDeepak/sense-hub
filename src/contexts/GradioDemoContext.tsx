@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface InsuredItem {
   ref_id: string;
@@ -30,8 +31,9 @@ interface GradioDemoContextType {
 const GradioDemoContext = createContext<GradioDemoContextType | undefined>(undefined);
 
 export function GradioDemoProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [selectedInsured, setSelectedInsured] = useState<InsuredItem | null>(null);
-  const [sessionId, setSessionId] = useState("default_session");
+  const [sessionId, setSessionId] = useState("");
   const [sessions, setSessions] = useState<{ session_uuid: string; created_at?: string; session_name?: string; version?: string }[]>([]);
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
@@ -76,8 +78,9 @@ export function GradioDemoProvider({ children }: { children: ReactNode }) {
     // Persist session name update in backend (fire-and-forget).
     void (async () => {
       try {
-        if (!sid || sid === "default_session") return;
-        await fetch(`${API_BASE}/gradio_demo/session/${sid}`, {
+        if (!sid || sid === "default_session" || !user?.email) return;
+        const emailStr = encodeURIComponent(user.email);
+        await fetch(`${API_BASE}/gradio_demo/session/${sid}?email=${emailStr}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ session_name: trimmed }),
