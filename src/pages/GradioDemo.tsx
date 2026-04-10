@@ -431,7 +431,7 @@ const GradioDemo = () => {
     // 2. Re-scroll on any layout changes (interactive resizing OR streaming content height changes)
     const observer = new ResizeObserver(() => requestAnimationFrame(scrollToBottom));
     observer.observe(viewport);
-    
+
     // Radix places the actual content in the first child of the viewport
     const content = viewport.firstElementChild;
     if (content) {
@@ -454,10 +454,10 @@ const GradioDemo = () => {
 
         for (const chat of data.chats || []) {
           if (chat.user_query) {
-            loaded.push({ 
-              role: "user", 
-              content: chat.user_query, 
-              timestamp: chat.created_at || "" 
+            loaded.push({
+              role: "user",
+              content: chat.user_query,
+              timestamp: chat.created_at || ""
             });
           }
 
@@ -543,8 +543,8 @@ const GradioDemo = () => {
     })();
   }, [sessionId]);
 
-  const sendMessage = useCallback(async () => {
-    const text = input.trim();
+  const sendMessage = useCallback(async (overrideInput?: string | any) => {
+    const text = typeof overrideInput === "string" ? overrideInput.trim() : input.trim();
     if (!text || isStreaming || !selectedInsured) return;
 
     const userMsg: ChatMessage = { role: "user", content: text, timestamp: new Date().toISOString() };
@@ -708,7 +708,7 @@ const GradioDemo = () => {
     const ref = refStr.toLowerCase().trim();
     if (!input || !ref) return 0;
     if (input === ref) return 1.1; // Bonus for exact match
-    
+
     // 1. Check for immediate substring/prefix matching (High priority)
     if (ref.startsWith(input)) return 0.9 + (input.length / ref.length);
     if (ref.includes(input)) return 0.7 + (input.length / ref.length);
@@ -720,19 +720,19 @@ const GradioDemo = () => {
 
     const leftBigrams = new Map();
     for (let i = 0; i < left.length - 1; i++) {
-        const bigram = left.substring(i, i + 2);
-        const count = leftBigrams.get(bigram) ?? 0;
-        leftBigrams.set(bigram, count + 1);
+      const bigram = left.substring(i, i + 2);
+      const count = leftBigrams.get(bigram) ?? 0;
+      leftBigrams.set(bigram, count + 1);
     }
 
     let intersectionSize = 0;
     for (let i = 0; i < right.length - 1; i++) {
-        const bigram = right.substring(i, i + 2);
-        const count = leftBigrams.get(bigram) ?? 0;
-        if (count > 0) {
-            leftBigrams.set(bigram, count - 1);
-            intersectionSize++;
-        }
+      const bigram = right.substring(i, i + 2);
+      const count = leftBigrams.get(bigram) ?? 0;
+      if (count > 0) {
+        leftBigrams.set(bigram, count - 1);
+        intersectionSize++;
+      }
     }
 
     return (2.0 * intersectionSize) / (left.length + right.length - 2);
@@ -750,31 +750,36 @@ const GradioDemo = () => {
 
     // Debug: log sample reference query structure
     if (referenceQueries.length > 0) {
+      console.log("referenceQueries", referenceQueries);
       console.log("[Suggestions] Sample reference query keys:", Object.keys(referenceQueries[0]), "user_query:", referenceQueries[0].user_query);
     }
 
     const matches = referenceQueries
       .map((q: any) => {
-        // Try multiple possible field names for the query text
-        const queryText = q.user_query || q.query || q.question || q.text || "";
+        // Handle both plain strings AND objects
+        const queryText =
+          typeof q === "string"
+            ? q
+            : q.user_query || q.query || q.question || q.text || "";
+
         return {
-          ...q,
+          ...(typeof q === "object" ? q : {}),
           _matchedText: queryText,
           score: getSimilarity(trimmed, queryText),
         };
       })
-      .filter((q: any) => q.score > 0.15)
+      .filter((q: any) => q.score > 0.08)
       .sort((a: any, b: any) => b.score - a.score)
-      .slice(0, 5);
+      .slice(0, 3);
 
     console.log("[Suggestions] Input:", trimmed, "| Total refs:", referenceQueries.length, "| Matches:", matches.length);
     setSuggestions(matches);
   }, [input, referenceQueries]);
 
   const handleSelectSuggestion = (text: string) => {
-    setInput(text);
+    setInput("");
     setSuggestions([]);
-    textareaRef.current?.focus();
+    sendMessage(text);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -803,8 +808,8 @@ const GradioDemo = () => {
       </div>
 
       {/* Messages */}
-      <ScrollArea 
-        className="flex-1 min-h-0 [&>[data-radix-scroll-area-viewport]>div]:!block [&>[data-radix-scroll-area-viewport]>div]:min-w-full" 
+      <ScrollArea
+        className="flex-1 min-h-0 [&>[data-radix-scroll-area-viewport]>div]:!block [&>[data-radix-scroll-area-viewport]>div]:min-w-full"
         ref={scrollRef as any}
       >
         <div className="w-full px-6 lg:px-12 py-8 space-y-6 transition-all duration-300">
@@ -870,26 +875,19 @@ const GradioDemo = () => {
               selectedInsured && webSearch && "border-blue-500/30"
             )}>
 
-              {/* Suggestions Panel */}
+              {/* Suggestions Panel (Inline) */}
               {suggestions.length > 0 && (
-                <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 p-1.5 bg-card/90 backdrop-blur-xl border border-border/40 rounded-xl shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-2 duration-300 z-[100]">
-                  <div className="flex items-center gap-2 px-2.5 mb-1.5 pt-1">
-                     <Search className="w-3 h-3 text-primary opacity-60" />
-                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Suggested Queries</span>
-                  </div>
-                  <div className="space-y-0.5 max-h-[220px] overflow-y-auto custom-scrollbar">
+                <div className="border-b border-border/40 bg-background/60 p-2 rounded-t-2xl animate-in fade-in slide-in-from-top-1">
+                  <div className="space-y-1.5 max-h-[180px] overflow-y-auto custom-scrollbar px-1 pb-1">
                     {suggestions.map((s, idx) => (
                       <button
                         key={idx}
                         type="button"
-                        onClick={() => handleSelectSuggestion(s.user_query)}
-                        className="w-full text-left px-2.5 py-2 text-xs rounded-lg hover:bg-primary/10 hover:text-primary transition-all duration-200 group flex items-center justify-between border border-transparent hover:border-primary/20"
+                        onClick={() => handleSelectSuggestion(s._matchedText)}
+                        className="w-full text-left px-3 py-2 text-xs rounded-xl bg-card border border-border/50 hover:bg-primary/5 hover:border-primary/30 transition-all duration-200 group flex items-center justify-between shadow-sm hover:shadow"
                       >
-                        <span className="truncate flex-1 pr-4 font-medium opacity-90 group-hover:opacity-100">{s.user_query}</span>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-[9px] font-mono text-muted-foreground opacity-40 group-hover:opacity-70">{(s.score * 100).toFixed(0)}%</span>
-                          <Send className="w-2.5 h-2.5 opacity-0 group-hover:opacity-40 transition-opacity" />
-                        </div>
+                        <span className="truncate flex-1 pr-4 font-medium text-muted-foreground group-hover:text-foreground transition-colors">{s._matchedText}</span>
+
                       </button>
                     ))}
                   </div>
