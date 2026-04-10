@@ -1,4 +1,4 @@
-import { Home, BarChart3, BookOpen, LogOut, MessageSquare, Shield, History, Trash2 } from "lucide-react";
+import { Home, BarChart3, BookOpen, LogOut, MessageSquare, Shield, History, Trash2, Sparkles } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { UserRole } from "@/contexts/AuthContext";
@@ -41,6 +41,7 @@ const allItems: { title: string; url: string; icon: typeof Home; roles: UserRole
   { title: "Chat Analytics", url: "/chat-analytics", icon: BarChart3, roles: ["user"] },
   { title: "Grounding Module", url: "/grounding-module", icon: BookOpen, roles: ["user"] },
   { title: "Gradio Demo", url: "/gradio-demo", icon: MessageSquare, roles: ["user"] },
+  { title: "Prompts", url: "/prompts", icon: Sparkles, roles: ["user", "admin"] },
 ];
 
 function getInitials(name: string) {

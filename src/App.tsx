@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import ChatAnalytics from "./pages/ChatAnalytics";
 import GroundingModule from "./pages/GroundingModule";
 import GradioDemo from "./pages/GradioDemo";
+import Prompts from "./pages/Prompts";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
@@ -33,6 +34,7 @@ const App = () => (
                 <Route path="/chat-analytics" element={<ProtectedRoute><ChatAnalytics /></ProtectedRoute>} />
                 <Route path="/grounding-module" element={<ProtectedRoute><GroundingModule /></ProtectedRoute>} />
                 <Route path="/gradio-demo" element={<ProtectedRoute><GradioDemo /></ProtectedRoute>} />
+                <Route path="/prompts" element={<ProtectedRoute><Prompts /></ProtectedRoute>} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
