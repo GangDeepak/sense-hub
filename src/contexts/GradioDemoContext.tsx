@@ -33,7 +33,7 @@ const GradioDemoContext = createContext<GradioDemoContextType | undefined>(undef
 export function GradioDemoProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [selectedInsured, setSelectedInsured] = useState<InsuredItem | null>(null);
-  const [sessionId, setSessionId] = useState("");
+  const [sessionId, setSessionId] = useState("default_session");
   const [sessions, setSessions] = useState<{ session_uuid: string; created_at?: string; session_name?: string; version?: string }[]>([]);
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
@@ -45,7 +45,7 @@ export function GradioDemoProvider({ children }: { children: ReactNode }) {
       const res = await fetch(`${API_BASE}/grounding/all_query/query_memory_test?with_vectors=false`);
       if (!res.ok) return;
       const data = await res.json();
-      
+
       // The endpoint returns Qdrant-style points with data in .payload
       const rawPoints = Array.isArray(data) ? data : (data.queries || data.points || []);
       const normalized = rawPoints.map((item: any) => {
@@ -54,7 +54,7 @@ export function GradioDemoProvider({ children }: { children: ReactNode }) {
         }
         return item;
       });
-      
+
       setReferenceQueries(normalized);
     } catch (err) {
       console.error("Failed to fetch reference queries:", err);
@@ -78,8 +78,8 @@ export function GradioDemoProvider({ children }: { children: ReactNode }) {
     // Persist session name update in backend (fire-and-forget).
     void (async () => {
       try {
-        if (!sid || sid === "default_session" || !user?.email) return;
-        const emailStr = encodeURIComponent(user.email);
+        if (!sid || sid === "default_session") return;
+        const emailStr = encodeURIComponent(user?.email || "default_email");
         await fetch(`${API_BASE}/gradio_demo/session/${sid}?email=${emailStr}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
