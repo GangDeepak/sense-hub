@@ -742,18 +742,32 @@ const GradioDemo = () => {
     const trimmed = input.trim();
     if (trimmed.length < 2 || referenceQueries.length === 0) {
       setSuggestions([]);
+      if (trimmed.length >= 2) {
+        console.warn("[Suggestions] referenceQueries is empty – cannot suggest. Length:", referenceQueries.length);
+      }
       return;
     }
 
+    // Debug: log sample reference query structure
+    if (referenceQueries.length > 0) {
+      console.log("[Suggestions] Sample reference query keys:", Object.keys(referenceQueries[0]), "user_query:", referenceQueries[0].user_query);
+    }
+
     const matches = referenceQueries
-      .map((q: any) => ({
-        ...q,
-        score: getSimilarity(trimmed, q.user_query || ""),
-      }))
-      .filter((q: any) => q.score > 0.2) // More lenient threshold
+      .map((q: any) => {
+        // Try multiple possible field names for the query text
+        const queryText = q.user_query || q.query || q.question || q.text || "";
+        return {
+          ...q,
+          _matchedText: queryText,
+          score: getSimilarity(trimmed, queryText),
+        };
+      })
+      .filter((q: any) => q.score > 0.15)
       .sort((a: any, b: any) => b.score - a.score)
       .slice(0, 5);
 
+    console.log("[Suggestions] Input:", trimmed, "| Total refs:", referenceQueries.length, "| Matches:", matches.length);
     setSuggestions(matches);
   }, [input, referenceQueries]);
 
