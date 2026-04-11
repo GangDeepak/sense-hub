@@ -4,6 +4,7 @@ import { ChevronDown, Search, Grid2x2, Plus, Trash2, Pencil, Check, X, Save, Loa
 import type { QueryRecord } from "./types";
 import { isEditable, apiUpdatePoint, apiDeletePoint, apiInsert } from "./types";
 import { SplitPanelWrapper } from "./SplitDetailPanel";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface QueriesTabProps {
   queries: QueryRecord[];
@@ -285,8 +286,9 @@ const QueriesTab = ({ queries: initialQueries, collection, loading, error, onRel
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const { user } = useAuth();
 
-  const editable = isEditable(collection);
+  const editable = isEditable(collection) && !!user?.edit_access;
 
   const uniqueTags = useMemo(() => {
     const tags = [...new Set(queries.flatMap((d) => d.intent_tags || []))].sort();

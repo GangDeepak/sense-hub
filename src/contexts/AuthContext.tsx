@@ -8,12 +8,12 @@ export interface AuthUser {
   email: string;
   name: string;
   role: UserRole;
+  edit_access?: boolean;
 }
 
 interface AuthContextType {
   user: AuthUser | null;
   login: (email: string, password: string, role: UserRole) => Promise<{ success: boolean; error?: string }>;
-  signup: (name: string, email: string, password: string, role: UserRole) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -42,7 +42,8 @@ async function fetchMe(): Promise<AuthUser> {
   if (!payload?.sub || !payload.role) throw new Error("Invalid /auth/me response");
 
   const name = payload.sub.includes("@") ? payload.sub.split("@")[0] : payload.sub;
-  return { email: payload.sub, name, role: payload.role };
+  const edit_access = localStorage.getItem("sense_edit_access") === "true";
+  return { email: payload.sub, name, role: payload.role, edit_access };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -89,11 +90,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: text || "Login failed" };
       }
 
-      const json = (await res.json()) as { access_token?: string; token_type?: string };
+      const json = (await res.json()) as { access_token?: string; token_type?: string; edit_access?: boolean };
       const token = json.access_token;
       if (!token) return { success: false, error: "Missing access token" };
 
       setAccessToken(token);
+      localStorage.setItem("sense_edit_access", String(!!json.edit_access));
       const me = await fetchMe();
       setUser(me);
       return { success: true };
@@ -105,39 +107,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup: AuthContextType["signup"] = async (name, email, password, role) => {
-    setIsLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/auth/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, full_name: name, email, password }),
-      });
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        return { success: false, error: text || "Signup failed" };
-      }
-
-      // Your backend signup does not return a token, so we log in right after.
-      const loginRes = await login(email, password, role);
-      return loginRes.success ? { success: true } : loginRes;
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Signup failed";
-      return { success: false, error: msg };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const logout = () => {
     clearAccessToken();
+    localStorage.removeItem("sense_edit_access");
     setUser(null);
     setIsLoading(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isAuthenticated: !!user, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

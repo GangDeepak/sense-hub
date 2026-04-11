@@ -112,12 +112,6 @@ export default function Login() {
               >
                 Sign In
               </Button>
-              <p className="text-sm text-muted-foreground">
-                Don't have an account?{" "}
-                <Link to="/signup" className="text-primary font-semibold hover:underline transition-colors">
-                  Sign up
-                </Link>
-              </p>
             </CardFooter>
           </form>
         </Card>

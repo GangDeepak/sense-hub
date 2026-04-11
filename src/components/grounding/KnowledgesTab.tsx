@@ -4,6 +4,7 @@ import { ChevronDown, Search, Plus, Pencil, Trash2, Check, X, Save, Loader2, Boo
 import type { KnowledgeRecord } from "./types";
 import { isEditable, apiUpdatePoint, apiDeletePoint, apiInsert } from "./types";
 import { SplitPanelWrapper, FieldBlock } from "./SplitDetailPanel";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface KnowledgesTabProps {
   knowledges: KnowledgeRecord[];
@@ -233,8 +234,9 @@ const KnowledgesTab = ({ knowledges: initialKnowledges, collection, loading, err
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const { user } = useAuth();
 
-  const editable = isEditable(collection);
+  const editable = isEditable(collection) && !!user?.edit_access;
 
   const uniqueTypes = useMemo(() => {
     const types = [...new Set(knowledges.map((d) => d.type).filter(Boolean) as string[])].sort();

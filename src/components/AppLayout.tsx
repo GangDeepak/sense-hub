@@ -18,18 +18,7 @@ export function AppLayout() {
       <div className="h-screen flex w-full overflow-hidden">
         <AppSidebar />
         <div className="flex-1 flex flex-col h-full bg-background overflow-hidden">
-          {!isAuthenticated && !isLoading && (
-            <header className="flex-shrink-0 flex items-center justify-end gap-2 px-6 py-3 border-b">
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <Link to="/login">Login</Link>
-                </Button>
-                <Button size="sm" asChild>
-                  <Link to="/signup">Sign Up</Link>
-                </Button>
-              </div>
-            </header>
-          )}
+
           <main className="flex-1 h-full overflow-hidden">
             <Outlet />
           </main>

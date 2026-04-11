@@ -14,7 +14,6 @@ import GradioDemo from "./pages/GradioDemo";
 import Prompts from "./pages/Prompts";
 import ApiDataPage from "./pages/ApiDataPage";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,7 +28,6 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
               <Route element={<AppLayout />}>
                 <Route path="/" element={<Index />} />
                 <Route path="/chat-analytics" element={<ProtectedRoute><ChatAnalytics /></ProtectedRoute>} />

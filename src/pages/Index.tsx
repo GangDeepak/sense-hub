@@ -1,7 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { ArrowRight, Layers, Bot, MessagesSquare, BarChart3, Fingerprint } from "lucide-react";
-import { SenseArchitecture } from "@/components/SenseArchitecture";
+
 
 const capabilities = [
   {
@@ -31,10 +31,10 @@ export default function Index() {
 
   const firstName = user?.name
     ? user.name
-        .replace(/\./g, " ")
-        .trim()
-        .split(/\s+/)[0]
-        .replace(/^./, (c) => c.toUpperCase())
+      .replace(/\./g, " ")
+      .trim()
+      .split(/\s+/)[0]
+      .replace(/^./, (c) => c.toUpperCase())
     : "User";
 
   return (
@@ -98,30 +98,9 @@ export default function Index() {
           </div>
         </section>
 
-        {/* ── Architecture Diagram ── */}
-        <section
-          className="mb-32 animate-fade-in opacity-0"
-          style={{ animationDelay: "0.4s", animationFillMode: "forwards" }}
-        >
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4 tracking-tight">
-              Under the Hood
-            </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Our bespoke multi-layered architecture intelligently routes complex
-              industry queries through context-aware grounding and internal
-              execution protocols before delivering precision responses.
-            </p>
-          </div>
-          {/* Container uses bg-muted/30 + border-border so it blends with the sidebar/background */}
-          <div className="bg-muted/30 border border-border rounded-3xl overflow-hidden pt-6">
-            <SenseArchitecture />
-          </div>
-        </section>
-
         {/* ── Capabilities ── */}
         <section
-          className="py-20 border-t border-border animate-fade-in opacity-0"
+          className="py-5 border-border animate-fade-in opacity-0"
           style={{ animationDelay: "0.5s", animationFillMode: "forwards" }}
         >
           <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">

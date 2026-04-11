@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/contexts/AuthContext";
 
 const normalizeName = (name: string) => {
   if (!name) return "Untitled Prompt";
@@ -266,6 +267,8 @@ const PromptsManager = () => {
   const [activeAppIdFilter, setActiveAppIdFilter] = useState<string | null>(null);
   const [showInsert, setShowInsert] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const canEdit = !!user?.edit_access;
 
   const loadPrompts = useCallback(async () => {
     setLoading(true);
@@ -356,18 +359,20 @@ const PromptsManager = () => {
         </div>
 
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 px-2 text-[10px] gap-1 text-primary hover:bg-primary/10 border border-primary/20 bg-primary/5 shadow-sm"
-            onClick={() => {
-              setSelectedId(null);
-              setShowInsert(true);
-            }}
-          >
-            <Plus className="w-2.5 h-2.5" />
-            <span className="font-semibold">Insert Prompt</span>
-          </Button>
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-[10px] gap-1 text-primary hover:bg-primary/10 border border-primary/20 bg-primary/5 shadow-sm"
+              onClick={() => {
+                setSelectedId(null);
+                setShowInsert(true);
+              }}
+            >
+              <Plus className="w-2.5 h-2.5" />
+              <span className="font-semibold">Insert Prompt</span>
+            </Button>
+          )}
 
           <div className="relative w-50 group">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-2.5 h-2.5 text-muted-foreground" />
@@ -521,26 +526,30 @@ const PromptsManager = () => {
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            onClick={async () => {
-              if (confirm("Are you sure you want to delete this prompt?")) {
-                try {
-                  await deletePrompt(selectedPrompt._id);
-                  setSelectedId(null);
-                  loadPrompts();
-                  toast({ title: "Success", description: "Prompt deleted successfully" });
-                } catch (e: any) {
-                  toast({ title: "Error", description: e.message, variant: "destructive" });
-                }
-              }
-            }}
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </Button>
-          <div className="h-4 w-px bg-border mx-1" />
+          {canEdit && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                onClick={async () => {
+                  if (confirm("Are you sure you want to delete this prompt?")) {
+                    try {
+                      await deletePrompt(selectedPrompt._id);
+                      setSelectedId(null);
+                      loadPrompts();
+                      toast({ title: "Success", description: "Prompt deleted successfully" });
+                    } catch (e: any) {
+                      toast({ title: "Error", description: e.message, variant: "destructive" });
+                    }
+                  }
+                }}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+              <div className="h-4 w-px bg-border mx-1" />
+            </>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -558,7 +567,7 @@ const PromptsManager = () => {
           <EditableField
             fieldKey="Name"
             value={selectedPrompt.name}
-            editable={true}
+            editable={canEdit}
             onSave={async (v) => {
               await updatePrompt(selectedPrompt._id, { ...selectedPrompt, name: v });
               loadPrompts();
@@ -567,7 +576,7 @@ const PromptsManager = () => {
           <EditableField
             fieldKey="Version"
             value={selectedPrompt.version}
-            editable={true}
+            editable={canEdit}
             onSave={async (v) => {
               await updatePrompt(selectedPrompt._id, { ...selectedPrompt, version: v });
               loadPrompts();
@@ -576,7 +585,7 @@ const PromptsManager = () => {
           <EditableField
             fieldKey="Model"
             value={selectedPrompt.model_name}
-            editable={true}
+            editable={canEdit}
             onSave={async (v) => {
               await updatePrompt(selectedPrompt._id, { ...selectedPrompt, model_name: v });
               loadPrompts();
@@ -586,7 +595,7 @@ const PromptsManager = () => {
             fieldKey="Max Tokens"
             value={selectedPrompt.max_tokens}
             type="number"
-            editable={true}
+            editable={canEdit}
             onSave={async (v) => {
               await updatePrompt(selectedPrompt._id, { ...selectedPrompt, max_tokens: v });
               loadPrompts();
@@ -595,7 +604,7 @@ const PromptsManager = () => {
           <EditableField
             fieldKey="Engine Type"
             value={selectedPrompt.engine_type}
-            editable={true}
+            editable={canEdit}
             onSave={async (v) => {
               await updatePrompt(selectedPrompt._id, { ...selectedPrompt, engine_type: v });
               loadPrompts();
@@ -604,7 +613,7 @@ const PromptsManager = () => {
           <EditableField
             fieldKey="App ID"
             value={selectedPrompt.app_id}
-            editable={true}
+            editable={canEdit}
             onSave={async (v) => {
               await updatePrompt(selectedPrompt._id, { ...selectedPrompt, app_id: v });
               loadPrompts();
@@ -614,7 +623,7 @@ const PromptsManager = () => {
             <EditableField
               fieldKey="Tenant ID"
               value={selectedPrompt.tenant_id}
-              editable={true}
+              editable={canEdit}
               onSave={async (v) => {
                 await updatePrompt(selectedPrompt._id, { ...selectedPrompt, tenant_id: v });
                 loadPrompts();
@@ -650,7 +659,7 @@ const PromptsManager = () => {
                 fieldKey="System Prompt Content"
                 value={selectedPrompt.system_prompt}
                 type="textarea"
-                editable={true}
+                editable={canEdit}
                 onSave={async (v) => {
                   await updatePrompt(selectedPrompt._id, { ...selectedPrompt, system_prompt: v });
                   loadPrompts();
