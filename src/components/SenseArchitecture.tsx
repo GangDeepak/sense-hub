@@ -66,14 +66,10 @@ const FlowNode: React.FC<FlowNodeProps> = ({ x, y, w, h, label, variant, delay }
   );
 };
 
-/* Database icon */
-const DBIcon: React.FC<{ x: number; y: number; label: string; delay: number }> = ({ x, y, label, delay }) => (
+/* Database label (text only, no icon) */
+const DBLabel: React.FC<{ x: number; y: number; label: string; delay: number }> = ({ x, y, label, delay }) => (
   <g style={{ opacity: 0, animation: `fadeSlideIn 0.5s ease ${delay}s forwards` }}>
-    <ellipse cx={x + 18} cy={y + 6} rx={16} ry={5} fill="#f59e0b" />
-    <rect x={x + 2} y={y + 6} width={32} height={14} fill="#fbbf24" />
-    <ellipse cx={x + 18} cy={y + 20} rx={16} ry={5} fill="#f59e0b" />
-    <ellipse cx={x + 18} cy={y + 13} rx={16} ry={5} fill="none" stroke="#f59e0b" strokeWidth="0.5" />
-    <text x={x + 18} y={y + 36} textAnchor="middle" fontSize="8" fontWeight="700"
+    <text x={x} y={y} textAnchor="middle" fontSize="9" fontWeight="700"
       fill="currentColor" className="text-muted-foreground" letterSpacing="0.8">
       {label}
     </text>
@@ -104,14 +100,14 @@ const ArrowLine: React.FC<{
   </g>
 );
 
-/* Side panel boxes */
+/* Side panel boxes - light theme */
 const ApiBox: React.FC<{ x: number; y: number; delay: number }> = ({ x, y, delay }) => (
   <g style={{ opacity: 0, animation: `fadeSlideIn 0.5s ease ${delay}s forwards` }}>
-    <rect x={x} y={y} width={180} height={95} rx={10} fill="var(--background, #fff)"
-      stroke="currentColor" className="text-border" strokeWidth="1.5" />
-    <rect x={x} y={y} width={180} height={18} rx={10} fill="url(#apiHeader)" />
-    <rect x={x} y={y + 10} width={180} height={8} fill="url(#apiHeader)" />
-    <text x={x + 90} y={y + 32} textAnchor="middle" fontSize="8" fontWeight="800" fill="currentColor">
+    <rect x={x} y={y} width={185} height={100} rx={12} fill="#f8fafc"
+      stroke="#e2e8f0" strokeWidth="1.5" />
+    <rect x={x} y={y} width={185} height={22} rx={12} fill="#e0f2fe" />
+    <rect x={x} y={y + 12} width={185} height={10} fill="#e0f2fe" />
+    <text x={x + 92} y={y + 15} textAnchor="middle" fontSize="9" fontWeight="800" fill="#0369a1">
       APIs (EXTERNAL)
     </text>
     {[
@@ -122,8 +118,8 @@ const ApiBox: React.FC<{ x: number; y: number; delay: number }> = ({ x, y, delay
     ].map((row, ri) => (
       <g key={ri}>
         {row.map((item, ci) => item && (
-          <text key={ci} x={x + 8 + ci * 62} y={y + 46 + ri * 12} fontSize="6.5" fontWeight="600"
-            fill="currentColor" className="text-muted-foreground">
+          <text key={ci} x={x + 10 + ci * 64} y={y + 40 + ri * 14} fontSize="7" fontWeight="600"
+            fill="#475569">
             {item}
           </text>
         ))}
@@ -134,16 +130,16 @@ const ApiBox: React.FC<{ x: number; y: number; delay: number }> = ({ x, y, delay
 
 const FuncBox: React.FC<{ x: number; y: number; delay: number }> = ({ x, y, delay }) => (
   <g style={{ opacity: 0, animation: `fadeSlideIn 0.5s ease ${delay}s forwards` }}>
-    <rect x={x} y={y} width={160} height={70} rx={10} fill="var(--background, #fff)"
-      stroke="currentColor" className="text-border" strokeWidth="1.5" />
-    <rect x={x} y={y} width={160} height={18} rx={10} fill="url(#apiHeader)" />
-    <rect x={x} y={y + 10} width={160} height={8} fill="url(#apiHeader)" />
-    <text x={x + 80} y={y + 32} textAnchor="middle" fontSize="8" fontWeight="800" fill="currentColor">
+    <rect x={x} y={y} width={165} height={75} rx={12} fill="#f8fafc"
+      stroke="#e2e8f0" strokeWidth="1.5" />
+    <rect x={x} y={y} width={165} height={22} rx={12} fill="#ecfdf5" />
+    <rect x={x} y={y + 12} width={165} height={10} fill="#ecfdf5" />
+    <text x={x + 82} y={y + 15} textAnchor="middle" fontSize="9" fontWeight="800" fill="#047857">
       FUNCTIONs (INTERNAL)
     </text>
     {["EMAIL COMPOSER", "FILTERING", "CONDITION-CHECKER"].map((fn, i) => (
-      <text key={i} x={x + 80} y={y + 46 + i * 10} textAnchor="middle" fontSize="7" fontWeight="600"
-        fill="currentColor" className="text-muted-foreground">
+      <text key={i} x={x + 82} y={y + 40 + i * 12} textAnchor="middle" fontSize="7.5" fontWeight="600"
+        fill="#475569">
         {fn}
       </text>
     ))}
@@ -212,14 +208,14 @@ export const SenseArchitecture: React.FC = () => {
 
         {/* ═══ ROW 1: USER QUERY ═══ */}
         <FlowNode x={CX - 65} y={S.userQuery} w={130} h={34} label="USER QUERY" variant="start" delay={d()} />
-        <DBIcon x={580} y={S.userQuery - 10} label="PROMPT DB" delay={d()} />
+        <DBLabel x={620} y={S.userQuery + 20} label="PROMPT DB" delay={d()} />
 
         {/* Arrow down */}
         <ArrowLine points={`${CX},${S.userQuery + 34} ${CX},${S.queryRewriter}`} delay={d()} />
 
         {/* ═══ ROW 2: QUERY REWRITER ═══ */}
         <FlowNode x={CX - 70} y={S.queryRewriter} w={140} h={55} label={"QUERY\nREWRITER"} variant="process" delay={d()} />
-        <DBIcon x={560} y={S.queryRewriter} label="CHAT-HISTORY" delay={d()} />
+        <DBLabel x={620} y={S.queryRewriter + 30} label="CHAT-HISTORY" delay={d()} />
         {/* Dashed line to Chat-History */}
         <ArrowLine points={`${CX + 70},${S.queryRewriter + 27} ${560},${S.queryRewriter + 20}`}
           delay={d()} dashed />
@@ -230,7 +226,7 @@ export const SenseArchitecture: React.FC = () => {
 
         {/* ═══ ROW 3: RESOLVABLE? ═══ */}
         <FlowNode x={CX - 65} y={S.resolvable} w={130} h={34} label="RESOLVABLE?" variant="decision" delay={d()} />
-        <DBIcon x={560} y={S.resolvable - 10} label="CHAT-TRACE" delay={d()} />
+        <DBLabel x={620} y={S.resolvable + 20} label="CHAT-TRACE" delay={d()} />
 
         {/* YES path down */}
         <ArrowLine points={`${CX},${S.resolvable + 34} ${CX},${S.grounding}`}
@@ -241,8 +237,8 @@ export const SenseArchitecture: React.FC = () => {
 
         {/* ═══ ROW 4: GROUNDING MODULE ═══ */}
         <FlowNode x={CX - 70} y={S.grounding} w={140} h={55} label={"GROUNDING\nMODULE"} variant="process" delay={d()} />
-        <DBIcon x={560} y={S.grounding} label={"KNOWLEDGE / QUERY\nGROUND TRUTH"} delay={d()} />
-        <ArrowLine points={`${CX + 70},${S.grounding + 27} ${560},${S.grounding + 20}`}
+        <DBLabel x={620} y={S.grounding + 30} label="KNOWLEDGE / QUERY GROUND TRUTH" delay={d()} />
+        <ArrowLine points={`${CX + 70},${S.grounding + 27} ${560},${S.grounding + 27}`}
           delay={d()} dashed />
 
         {/* Arrow down */}
