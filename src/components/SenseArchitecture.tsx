@@ -100,14 +100,14 @@ const ArrowLine: React.FC<{
   </g>
 );
 
-/* Side panel boxes */
+/* Side panel boxes - light theme */
 const ApiBox: React.FC<{ x: number; y: number; delay: number }> = ({ x, y, delay }) => (
   <g style={{ opacity: 0, animation: `fadeSlideIn 0.5s ease ${delay}s forwards` }}>
-    <rect x={x} y={y} width={180} height={95} rx={10} fill="var(--background, #fff)"
-      stroke="currentColor" className="text-border" strokeWidth="1.5" />
-    <rect x={x} y={y} width={180} height={18} rx={10} fill="url(#apiHeader)" />
-    <rect x={x} y={y + 10} width={180} height={8} fill="url(#apiHeader)" />
-    <text x={x + 90} y={y + 32} textAnchor="middle" fontSize="8" fontWeight="800" fill="currentColor">
+    <rect x={x} y={y} width={185} height={100} rx={12} fill="#f8fafc"
+      stroke="#e2e8f0" strokeWidth="1.5" />
+    <rect x={x} y={y} width={185} height={22} rx={12} fill="#e0f2fe" />
+    <rect x={x} y={y + 12} width={185} height={10} fill="#e0f2fe" />
+    <text x={x + 92} y={y + 15} textAnchor="middle" fontSize="9" fontWeight="800" fill="#0369a1">
       APIs (EXTERNAL)
     </text>
     {[
@@ -118,8 +118,8 @@ const ApiBox: React.FC<{ x: number; y: number; delay: number }> = ({ x, y, delay
     ].map((row, ri) => (
       <g key={ri}>
         {row.map((item, ci) => item && (
-          <text key={ci} x={x + 8 + ci * 62} y={y + 46 + ri * 12} fontSize="6.5" fontWeight="600"
-            fill="currentColor" className="text-muted-foreground">
+          <text key={ci} x={x + 10 + ci * 64} y={y + 40 + ri * 14} fontSize="7" fontWeight="600"
+            fill="#475569">
             {item}
           </text>
         ))}
@@ -130,16 +130,16 @@ const ApiBox: React.FC<{ x: number; y: number; delay: number }> = ({ x, y, delay
 
 const FuncBox: React.FC<{ x: number; y: number; delay: number }> = ({ x, y, delay }) => (
   <g style={{ opacity: 0, animation: `fadeSlideIn 0.5s ease ${delay}s forwards` }}>
-    <rect x={x} y={y} width={160} height={70} rx={10} fill="var(--background, #fff)"
-      stroke="currentColor" className="text-border" strokeWidth="1.5" />
-    <rect x={x} y={y} width={160} height={18} rx={10} fill="url(#apiHeader)" />
-    <rect x={x} y={y + 10} width={160} height={8} fill="url(#apiHeader)" />
-    <text x={x + 80} y={y + 32} textAnchor="middle" fontSize="8" fontWeight="800" fill="currentColor">
+    <rect x={x} y={y} width={165} height={75} rx={12} fill="#f8fafc"
+      stroke="#e2e8f0" strokeWidth="1.5" />
+    <rect x={x} y={y} width={165} height={22} rx={12} fill="#ecfdf5" />
+    <rect x={x} y={y + 12} width={165} height={10} fill="#ecfdf5" />
+    <text x={x + 82} y={y + 15} textAnchor="middle" fontSize="9" fontWeight="800" fill="#047857">
       FUNCTIONs (INTERNAL)
     </text>
     {["EMAIL COMPOSER", "FILTERING", "CONDITION-CHECKER"].map((fn, i) => (
-      <text key={i} x={x + 80} y={y + 46 + i * 10} textAnchor="middle" fontSize="7" fontWeight="600"
-        fill="currentColor" className="text-muted-foreground">
+      <text key={i} x={x + 82} y={y + 40 + i * 12} textAnchor="middle" fontSize="7.5" fontWeight="600"
+        fill="#475569">
         {fn}
       </text>
     ))}
