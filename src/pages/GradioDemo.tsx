@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Bot, User, Loader2, Copy, ThumbsUp, ThumbsDown, Mail, Boxes, X, Check, Globe, Building2, Search, CornerDownRight } from "lucide-react";
+import { Send, Bot, User, Loader2, Copy, ThumbsUp, ThumbsDown, Mail, Boxes, X, Check, Globe, Building2, Search, CornerDownRight, Pencil, FolderOpen, Eye, Archive, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,6 +15,11 @@ import { SplitPanelWrapper, FieldBlock } from "@/components/grounding/SplitDetai
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
+export interface StatusMessage {
+  icon?: string;
+  message: string;
+}
+
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
@@ -22,7 +27,7 @@ interface ChatMessage {
   moduleOutputs?: ModuleOutputs;
   emailDraft?: EmailDraft;
   followUp?: string[];
-  statusMessages?: string[];
+  statusMessages?: StatusMessage[];
 }
 
 interface EmailDraft {
@@ -279,7 +284,7 @@ function AssistantMessage({
   emailDraft?: EmailDraft;
   timestamp?: string;
   followUp?: string[];
-  statusMessages?: string[];
+  statusMessages?: StatusMessage[];
   onShowModules: () => void;
   onShowEmail: () => void;
   onFollowUpClick: (text: string) => void;
@@ -316,58 +321,33 @@ function AssistantMessage({
 
       <div className="max-w-[80%] min-w-0 flex flex-col">
 
-        {/* Status timeline — visible while waiting for first chunk */}
-        {showStatusTimeline && (
-          <div className="mb-3 flex flex-col">
-            {statusMessages!.map((msg, idx) => {
-              const isLatest = idx === statusMessages!.length - 1;
-              const isFirst = idx === 0;
+        {/* Status Phase — strictly visible only BEFORE the main content chunks arrive */}
+        {hasStatus && !content && (
+          <div className="mb-4 mt-2 relative animate-fade-in flex flex-col gap-3">
+            {/* The single continuous vertical line */}
+            <div className="absolute left-[8px] top-[20px] bottom-[10px] w-px bg-border/60 z-0" />
+            
+            {/* The individual statuses pulled from SSE objects */}
+            {statusMessages!.map((status, idx) => {
+              // Map standard backend names to Lucide icons
+              let IconComp = Search;
+              if (status.icon === "pencil") IconComp = Pencil;
+              else if (status.icon === "folder-open") IconComp = FolderOpen;
+              else if (status.icon === "eye") IconComp = Eye;
+              else if (status.icon === "archive") IconComp = Archive;
+              else if (status.icon === "file-text") IconComp = FileText;
+
               return (
-                <div key={idx} className="flex gap-3">
-                  {/* Left: dot + connector line */}
-                  <div className="flex flex-col items-center">
-                    <div className={cn(
-                      "shrink-0 w-[18px] h-[18px] rounded-full border flex items-center justify-center",
-                      isLatest
-                        ? "border-primary/50 bg-primary/10"
-                        : "border-border/60 bg-muted/60"
-                    )}>
-                      {isLatest ? (
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                      ) : (
-                        <svg className="w-2.5 h-2.5 text-muted-foreground/60" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                    {/* Connector line — only between items */}
-                    {!isLatest && (
-                      <div className="w-px flex-1 min-h-[10px] my-1 bg-border/40" />
-                    )}
+                <div key={idx} className="flex items-start gap-4 relative z-10 transition-colors">
+                  <div className="shrink-0 w-[17px] h-[17px] flex items-center justify-center bg-background mt-0.5">
+                    <IconComp className="w-[17px] h-[17px] text-muted-foreground/75" strokeWidth={1.5} />
                   </div>
-                  {/* Right: text */}
-                  <span className={cn(
-                    "text-sm pb-3 leading-snug",
-                    isLatest ? "text-foreground/80" : "text-muted-foreground/50"
-                  )}>
-                    {msg}
+                  <span className="text-[15px] font-medium text-muted-foreground">
+                    {status.message}
                   </span>
                 </div>
               );
             })}
-          </div>
-        )}
-
-
-        {/* Status done — collapsed single row after content starts */}
-        {showStatusDone && (
-          <div className="flex items-center gap-2 mb-3 text-muted-foreground/50">
-            <div className="shrink-0 w-[18px] h-[18px] rounded-full border border-border/60 bg-muted/60 flex items-center justify-center">
-              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <span className="text-xs">Done</span>
           </div>
         )}
 
@@ -811,14 +791,19 @@ const GradioDemo = () => {
 
               // Handle status event — push message to the active assistant msg
               if (event === "status") {
-                const statusMsg = parsed.chat_response?.content?.message;
-                if (statusMsg) {
+                const statusData = parsed.chat_response?.content?.message;
+                // Normalize to objects regardless of if backend sends string or { icon, message }
+                const normalizedStatus = typeof statusData === "string" 
+                  ? { message: statusData } 
+                  : statusData;
+
+                if (normalizedStatus && normalizedStatus.message) {
                   setMessages((prev) => {
                     const updated = [...prev];
                     const last = updated[updated.length - 1];
                     updated[updated.length - 1] = {
                       ...last,
-                      statusMessages: [...(last.statusMessages ?? []), statusMsg],
+                      statusMessages: [...(last.statusMessages ?? []), normalizedStatus],
                     };
                     return updated;
                   });
