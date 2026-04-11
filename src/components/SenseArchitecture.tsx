@@ -311,13 +311,13 @@ export const SenseArchitecture: React.FC = () => {
         </g>
 
         {/* EXECUTION ENGINE */}
-        <FlowNode x={CX + 180} y={S.executionEngine} w={120} h={55} label={"EXECUTION\nENGINE"} variant="process" delay={d()} />
+        <FlowNode x={CX + 200} y={S.executionEngine} w={120} h={55} label={"EXECUTION\nENGINE"} variant="process" delay={d()} />
 
         {/* API & Function boxes */}
-        <ApiBox x={540} y={S.executionEngine - 20} delay={d()} />
-        <FuncBox x={540} y={S.executionEngine + 85} delay={d()} />
+        <ApiBox x={640} y={S.executionEngine - 20} delay={d()} />
+        <FuncBox x={640} y={S.executionEngine + 85} delay={d()} />
         {/* Dashed lines to boxes */}
-        <ArrowLine points={`${CX + 300},${S.executionEngine + 27} ${540},${S.executionEngine + 27}`}
+        <ArrowLine points={`${CX + 320},${S.executionEngine + 27} ${640},${S.executionEngine + 27}`}
           delay={d()} dashed markerEnd={false} />
 
         {/* Arrow down: Task Planning → Context-Pack → Response Handler */}
