@@ -166,7 +166,7 @@ export const SenseArchitecture: React.FC = () => {
 
   // Layout constants
   const CX = 280; // center X for main column
-  const svgW = 750;
+  const svgW = 850;
   const svgH = 1050;
 
   // Step positions (y)
