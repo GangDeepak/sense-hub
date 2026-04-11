@@ -166,7 +166,7 @@ export const SenseArchitecture: React.FC = () => {
 
   // Layout constants
   const CX = 280; // center X for main column
-  const svgW = 750;
+  const svgW = 850;
   const svgH = 1050;
 
   // Step positions (y)
@@ -298,26 +298,26 @@ export const SenseArchitecture: React.FC = () => {
 
         {/* Bidirectional to Execution Engine */}
         <g style={{ opacity: 0, animation: `fadeSlideIn 0.4s ease ${d()}s forwards` }}>
-          <line x1={CX + 60} y1={S.taskPlanning + 20} x2={CX + 180} y2={S.executionEngine + 20}
+          <line x1={CX + 60} y1={S.taskPlanning + 20} x2={CX + 200} y2={S.executionEngine + 20}
             stroke="currentColor" className="text-border" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
-          <line x1={CX + 180} y1={S.executionEngine + 35} x2={CX + 60} y2={S.taskPlanning + 35}
+          <line x1={CX + 200} y1={S.executionEngine + 35} x2={CX + 60} y2={S.taskPlanning + 35}
             stroke="currentColor" className="text-border" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
-          <text x={CX + 120} y={S.taskPlanning + 14} textAnchor="middle" fontSize="7" fontWeight="700"
+          <text x={CX + 130} y={S.taskPlanning + 14} textAnchor="middle" fontSize="7" fontWeight="700"
             fill="currentColor" className="text-muted-foreground">PAYLOAD</text>
-          <text x={CX + 120} y={S.taskPlanning + 50} textAnchor="middle" fontSize="6" fontWeight="700"
+          <text x={CX + 130} y={S.taskPlanning + 50} textAnchor="middle" fontSize="6" fontWeight="700"
             fill="currentColor" className="text-muted-foreground">RAW/POST-PROCESSED</text>
-          <text x={CX + 120} y={S.taskPlanning + 58} textAnchor="middle" fontSize="6" fontWeight="700"
+          <text x={CX + 130} y={S.taskPlanning + 58} textAnchor="middle" fontSize="6" fontWeight="700"
             fill="currentColor" className="text-muted-foreground">SUBMISSION DATA</text>
         </g>
 
         {/* EXECUTION ENGINE */}
-        <FlowNode x={CX + 180} y={S.executionEngine} w={120} h={55} label={"EXECUTION\nENGINE"} variant="process" delay={d()} />
+        <FlowNode x={CX + 200} y={S.executionEngine} w={120} h={55} label={"EXECUTION\nENGINE"} variant="process" delay={d()} />
 
         {/* API & Function boxes */}
-        <ApiBox x={540} y={S.executionEngine - 20} delay={d()} />
-        <FuncBox x={540} y={S.executionEngine + 85} delay={d()} />
+        <ApiBox x={640} y={S.executionEngine - 20} delay={d()} />
+        <FuncBox x={640} y={S.executionEngine + 85} delay={d()} />
         {/* Dashed lines to boxes */}
-        <ArrowLine points={`${CX + 300},${S.executionEngine + 27} ${540},${S.executionEngine + 27}`}
+        <ArrowLine points={`${CX + 320},${S.executionEngine + 27} ${640},${S.executionEngine + 27}`}
           delay={d()} dashed markerEnd={false} />
 
         {/* Arrow down: Task Planning → Context-Pack → Response Handler */}
