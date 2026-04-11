@@ -98,8 +98,14 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarContent>
         <div className="flex items-center justify-between px-2 py-2">
-          {!collapsed && <span className="font-semibold text-sm">Sense</span>}
-          <SidebarTrigger className={collapsed ? "mx-auto" : "ml-auto"} />
+          {collapsed ? (
+            <SidebarTrigger className="mx-auto" />
+          ) : (
+            <>
+              <img src="/bluepond.png" alt="BluePond" className="h-7 object-contain" />
+              <SidebarTrigger className="ml-auto" />
+            </>
+          )}
         </div>
         <SidebarGroup>
           <SidebarGroupContent>

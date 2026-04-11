@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Bot, User, Loader2, Copy, ThumbsUp, ThumbsDown, Mail, Boxes, X, Check, Globe, Building2, Search } from "lucide-react";
+import { Send, Bot, User, Loader2, Copy, ThumbsUp, ThumbsDown, Mail, Boxes, X, Check, Globe, Building2, Search, CornerDownRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,6 +21,8 @@ interface ChatMessage {
   timestamp?: string;
   moduleOutputs?: ModuleOutputs;
   emailDraft?: EmailDraft;
+  followUp?: string[];
+  statusMessages?: string[];
 }
 
 interface EmailDraft {
@@ -197,7 +199,7 @@ const markdownComponents: React.ComponentProps<typeof ReactMarkdown>["components
 
   // ── Paragraph ──
   p({ children }) {
-    return <p className="text-sm leading-relaxed my-1.5 text-foreground/90">{children}</p>;
+    return <p className="text-sm leading-relaxed text-foreground/90">{children}</p>;
   },
 
   // ── Lists ──
@@ -264,8 +266,11 @@ function AssistantMessage({
   moduleOutputs,
   emailDraft,
   timestamp,
+  followUp,
+  statusMessages,
   onShowModules,
   onShowEmail,
+  onFollowUpClick,
 }: {
   content: string;
   isStreaming: boolean;
@@ -273,8 +278,11 @@ function AssistantMessage({
   moduleOutputs: ModuleOutputs | null;
   emailDraft?: EmailDraft;
   timestamp?: string;
+  followUp?: string[];
+  statusMessages?: string[];
   onShowModules: () => void;
   onShowEmail: () => void;
+  onFollowUpClick: (text: string) => void;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -290,15 +298,81 @@ function AssistantMessage({
   // Always show the full content as-is — the email banner renders below it separately.
   const displayContent = content;
 
+  // Show status timeline: while streaming with no content yet, show all steps.
+  // Once content arrives, collapse to a single "Done" row.
+  const hasStatus = statusMessages && statusMessages.length > 0;
+  const showStatusTimeline = hasStatus && isStreaming && isLast && !content;
+  const showStatusDone = hasStatus && (!isStreaming || !!content);
+
   return (
     <div className="flex gap-3 justify-start animate-fade-in">
-      <div className="shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mt-1">
-        <Bot className="h-4 w-4 text-primary" />
+      <div className="shrink-0 h-8 w-8 rounded-full flex items-center justify-center overflow-hidden">
+        <img
+          src="/bp.png"
+          alt="Assistant"
+          className={`h-6 w-6 object-contain transition-transform ${isStreaming && !content ? "animate-spin" : ""}`}
+        />
       </div>
 
       <div className="max-w-[80%] min-w-0 flex flex-col">
+
+        {/* Status timeline — visible while waiting for first chunk */}
+        {showStatusTimeline && (
+          <div className="mb-3 flex flex-col">
+            {statusMessages!.map((msg, idx) => {
+              const isLatest = idx === statusMessages!.length - 1;
+              const isFirst = idx === 0;
+              return (
+                <div key={idx} className="flex gap-3">
+                  {/* Left: dot + connector line */}
+                  <div className="flex flex-col items-center">
+                    <div className={cn(
+                      "shrink-0 w-[18px] h-[18px] rounded-full border flex items-center justify-center",
+                      isLatest
+                        ? "border-primary/50 bg-primary/10"
+                        : "border-border/60 bg-muted/60"
+                    )}>
+                      {isLatest ? (
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                      ) : (
+                        <svg className="w-2.5 h-2.5 text-muted-foreground/60" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    {/* Connector line — only between items */}
+                    {!isLatest && (
+                      <div className="w-px flex-1 min-h-[10px] my-1 bg-border/40" />
+                    )}
+                  </div>
+                  {/* Right: text */}
+                  <span className={cn(
+                    "text-sm pb-3 leading-snug",
+                    isLatest ? "text-foreground/80" : "text-muted-foreground/50"
+                  )}>
+                    {msg}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+
+        {/* Status done — collapsed single row after content starts */}
+        {showStatusDone && (
+          <div className="flex items-center gap-2 mb-3 text-muted-foreground/50">
+            <div className="shrink-0 w-[18px] h-[18px] rounded-full border border-border/60 bg-muted/60 flex items-center justify-center">
+              <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <span className="text-xs">Done</span>
+          </div>
+        )}
+
         {/* Message bubble */}
-        <div className="px-4 text-sm leading-relaxed overflow-hidden">
+        <div className="text-sm leading-relaxed overflow-hidden">
           {displayContent && (
             <div className="prose-reset max-w-none break-words">
               <ReactMarkdown
@@ -354,7 +428,7 @@ function AssistantMessage({
 
         {/* Action bar — shown on every completed assistant message */}
         {showActionBar && (
-          <div className="mt-1.5 flex items-center justify-between px-1">
+          <div className={cn("mt-1.5 flex items-center justify-between", !followUp?.length && "mb-2")}>
             <div className="flex flex-wrap items-center gap-1">
               <button
                 type="button"
@@ -395,6 +469,33 @@ function AssistantMessage({
                 {formatTime(timestamp)}
               </span>
             )}
+          </div>
+        )}
+
+        {/* Follow-up suggestions */}
+        {followUp && followUp.length > 0 && !isStreaming && (
+          <div className="mt-2 border-t border-white/5 pt-4">
+            <div className="flex items-center gap-2 mb-2 px-1">
+              <h3 className="text-sm font-semibold text-foreground/90">Follow-ups</h3>
+            </div>
+            <div className="flex flex-col">
+              {followUp.map((query, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => onFollowUpClick(query)}
+                  className={cn(
+                    "group w-full flex items-center gap-3 py-3 px-2 text-left transition-all border-b border-white/5 last:border-0 rounded-lg",
+                    "hover:bg-white/[0.02] hover:pl-3"
+                  )}
+                >
+                  <CornerDownRight className="w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-primary transition-colors" />
+                  <span className="text-sm text-foreground/70 group-hover:text-foreground transition-colors line-clamp-1">
+                    {query}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -540,6 +641,7 @@ const GradioDemo = () => {
             timestamp: assistantTime,
             moduleOutputs: Object.keys(rest).length > 0 ? rest : undefined,
             emailDraft,
+            followUp: chat.follow_up || chat.chat_response?.follow_up || [],
           });
         }
 
@@ -691,6 +793,37 @@ const GradioDemo = () => {
                   });
                 }
               }
+
+              // Handle follow-up queries event
+              if (event === "follow_up") {
+                const suggestions = parsed.chat_response?.content;
+                if (Array.isArray(suggestions)) {
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    updated[updated.length - 1] = {
+                      ...updated[updated.length - 1],
+                      followUp: suggestions,
+                    };
+                    return updated;
+                  });
+                }
+              }
+
+              // Handle status event — push message to the active assistant msg
+              if (event === "status") {
+                const statusMsg = parsed.chat_response?.content?.message;
+                if (statusMsg) {
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    const last = updated[updated.length - 1];
+                    updated[updated.length - 1] = {
+                      ...last,
+                      statusMessages: [...(last.statusMessages ?? []), statusMsg],
+                    };
+                    return updated;
+                  });
+                }
+              }
             } catch {
               // skip malformed JSON
             }
@@ -802,19 +935,6 @@ const GradioDemo = () => {
 
   const listPane = (
     <div className="flex flex-col h-full w-full min-h-0 bg-background relative isolate">
-      {/* Header */}
-      <div className="border-b px-6 py-4 flex items-center justify-between flex-shrink-0 bg-background/50 backdrop-blur-sm z-10">
-        <div className="flex items-center gap-3">
-          <Bot className="h-5 w-5 text-primary" />
-          <h1 className="text-lg font-semibold">Gradio Demo</h1>
-        </div>
-        {selectedInsured && (
-          <span className="text-sm text-muted-foreground bg-secondary/50 px-3 py-1.5 rounded-full border border-border/50">
-            Insured:{" "}
-            <span className="font-medium text-foreground">{selectedInsured.insured_name}</span>
-          </span>
-        )}
-      </div>
 
       {/* Messages */}
       <ScrollArea
@@ -864,6 +984,9 @@ const GradioDemo = () => {
                 emailDraft={msg.emailDraft}
                 onShowModules={() => setActiveDetail({ type: "modules", msgIndex: i })}
                 onShowEmail={() => setActiveDetail({ type: "email", msgIndex: i })}
+                followUp={msg.followUp}
+                statusMessages={msg.statusMessages}
+                onFollowUpClick={(text) => handleSelectSuggestion(text)}
               />
             );
           })}

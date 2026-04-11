@@ -46,11 +46,21 @@ export function GradioDemoProvider({ children }: { children: ReactNode }) {
       if (!res.ok) return;
       const data = await res.json();
 
-      // The endpoint returns Qdrant-style points with data in .payload
-      const rawPoints = Array.isArray(data) ? data : (data.queries || data.points || []);
-      const normalized = rawPoints.map((item: any) => {
+      // API returns: { status, collection_name, count, queries: string[] }
+      // Normalise to objects with a `user_query` field so the suggestion
+      // matcher in GradioDemo can find them via q.user_query.
+      const rawQueries: any[] = Array.isArray(data)
+        ? data
+        : (data.queries || data.points || []);
+
+      const normalized = rawQueries.map((item: any) => {
+        // Already an object with payload (Qdrant-style)
         if (item && typeof item === "object" && item.payload) {
           return { ...item.payload, _doc_id: item.id };
+        }
+        // Plain string — wrap it
+        if (typeof item === "string") {
+          return { user_query: item };
         }
         return item;
       });
@@ -60,6 +70,7 @@ export function GradioDemoProvider({ children }: { children: ReactNode }) {
       console.error("Failed to fetch reference queries:", err);
     }
   };
+
 
   useEffect(() => {
     fetchReferenceQueries();
