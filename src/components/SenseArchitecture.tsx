@@ -1,298 +1,371 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-/* ------------------------------------------------------------------
-   Tiny helpers
------------------------------------------------------------------- */
-const Connector = ({ label }: { label?: string }) => (
-  <div className="flex flex-col items-center relative z-10">
-    <div className="w-px h-8 bg-border" />
-    {label && (
-      <span className="absolute left-3 top-3 text-[9px] font-semibold tracking-widest text-muted-foreground uppercase whitespace-nowrap">
-        {label}
-      </span>
-    )}
-  </div>
-);
+/* ─── Animated flow architecture matching the reference diagram ─── */
 
-const Arrow = ({ label }: { label?: string }) => (
-  <div className="flex flex-col items-center relative z-10">
-    <div className="w-px h-6 bg-border" />
-    <div className="w-0 h-0 border-x-4 border-x-transparent border-t-[6px] border-t-border" />
-    {label && (
-      <span className="mt-1 text-[9px] font-semibold tracking-wide text-muted-foreground uppercase whitespace-nowrap">
-        {label}
-      </span>
-    )}
-  </div>
-);
+const ANIM_DELAY = 0.3; // seconds between each step reveal
 
-type NodeVariant = "start" | "process" | "decision" | "end";
+interface FlowNodeProps {
+  x: number; y: number; w: number; h: number;
+  label: string; variant: "start" | "process" | "decision" | "end";
+  delay: number;
+}
 
-const Node = ({
-  label,
-  variant = "process",
-  sub,
-}: {
-  label: string | React.ReactNode;
-  variant?: NodeVariant;
-  sub?: string;
-}) => {
-  const styles: Record<NodeVariant, string> = {
-    start:
-      "bg-gradient-to-r from-green-400 to-lime-400 text-slate-900 rounded-full px-8 py-2.5 font-bold text-sm shadow-md",
-    process:
-      "bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-400 text-white rounded-xl px-6 py-3.5 font-bold text-sm shadow-lg min-w-[160px] text-center leading-snug",
-    decision:
-      "bg-gradient-to-r from-orange-400 to-amber-400 text-white rounded-full px-6 py-2.5 font-bold text-sm shadow-md whitespace-nowrap",
-    end:
-      "bg-gradient-to-r from-green-400 to-lime-400 text-slate-900 rounded-full px-8 py-2.5 font-bold text-sm shadow-md",
+const FlowNode: React.FC<FlowNodeProps> = ({ x, y, w, h, label, variant, delay }) => {
+  const lines = label.split("\n");
+  const fontSize = variant === "decision" ? 10 : 11;
+
+  const gradients: Record<string, [string, string]> = {
+    start: ["#4ade80", "#a3e635"],
+    process: ["#6366f1", "#22d3ee"],
+    decision: ["#fb923c", "#fbbf24"],
+    end: ["#4ade80", "#a3e635"],
   };
+  const [c1, c2] = gradients[variant];
+  const textColor = variant === "start" || variant === "end" ? "#1e293b" : "#ffffff";
+  const gId = `g-${label.replace(/\W/g, "")}-${x}-${y}`;
 
   return (
-    <div className="flex flex-col items-center">
-      <div className={styles[variant]}>{label}</div>
-      {sub && <p className="mt-1 text-[9px] text-slate-400 tracking-wide text-center">{sub}</p>}
-    </div>
+    <g
+      className="flow-node"
+      style={{ opacity: 0, animation: `fadeSlideIn 0.5s ease ${delay}s forwards` }}
+    >
+      <defs>
+        <linearGradient id={gId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={c1} />
+          <stop offset="100%" stopColor={c2} />
+        </linearGradient>
+        {variant === "process" && (
+          <filter id={`shadow-${gId}`}>
+            <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor={c1} floodOpacity="0.3" />
+          </filter>
+        )}
+      </defs>
+      {variant === "decision" ? (
+        <rect x={x} y={y} width={w} height={h} rx={h / 2} fill={`url(#${gId})`} />
+      ) : variant === "start" || variant === "end" ? (
+        <rect x={x} y={y} width={w} height={h} rx={h / 2} fill={`url(#${gId})`} />
+      ) : (
+        <rect
+          x={x} y={y} width={w} height={h} rx={14}
+          fill={`url(#${gId})`}
+          filter={`url(#shadow-${gId})`}
+        />
+      )}
+      {lines.map((line, i) => (
+        <text
+          key={i}
+          x={x + w / 2} y={y + h / 2 + (i - (lines.length - 1) / 2) * (fontSize + 2)}
+          textAnchor="middle" dominantBaseline="central"
+          fill={textColor} fontWeight="700" fontSize={fontSize}
+          fontFamily="system-ui, sans-serif" letterSpacing="0.5"
+        >
+          {line}
+        </text>
+      ))}
+    </g>
   );
 };
 
-const DB = ({ label }: { label: string }) => (
-  <div className="flex flex-col items-center gap-1">
-    <svg viewBox="0 0 32 24" className="w-8 h-6" fill="none">
-      <ellipse cx="16" cy="5" rx="13" ry="4" fill="#f59e0b" />
-      <rect x="3" y="5" width="26" height="12" fill="#fbbf24" />
-      <ellipse cx="16" cy="17" rx="13" ry="4" fill="#f59e0b" />
-    </svg>
-    <span className="text-[9px] font-bold text-slate-500 text-center tracking-wide uppercase leading-tight max-w-[90px]">
+/* Database icon */
+const DBIcon: React.FC<{ x: number; y: number; label: string; delay: number }> = ({ x, y, label, delay }) => (
+  <g style={{ opacity: 0, animation: `fadeSlideIn 0.5s ease ${delay}s forwards` }}>
+    <ellipse cx={x + 18} cy={y + 6} rx={16} ry={5} fill="#f59e0b" />
+    <rect x={x + 2} y={y + 6} width={32} height={14} fill="#fbbf24" />
+    <ellipse cx={x + 18} cy={y + 20} rx={16} ry={5} fill="#f59e0b" />
+    <ellipse cx={x + 18} cy={y + 13} rx={16} ry={5} fill="none" stroke="#f59e0b" strokeWidth="0.5" />
+    <text x={x + 18} y={y + 36} textAnchor="middle" fontSize="8" fontWeight="700"
+      fill="currentColor" className="text-muted-foreground" letterSpacing="0.8">
       {label}
-    </span>
-  </div>
+    </text>
+  </g>
 );
 
-const DotLine = () => (
-  <div className="flex-1 border-t border-dashed border-border mx-2 mt-2 animate-pulse" />
+/* Arrow line */
+const ArrowLine: React.FC<{
+  points: string; delay: number; dashed?: boolean; label?: string;
+  labelX?: number; labelY?: number; markerEnd?: boolean;
+}> = ({ points, delay, dashed, label, labelX, labelY, markerEnd = true }) => (
+  <g style={{ opacity: 0, animation: `fadeSlideIn 0.4s ease ${delay}s forwards` }}>
+    <polyline
+      points={points}
+      fill="none"
+      stroke="currentColor"
+      className="text-border"
+      strokeWidth="1.5"
+      strokeDasharray={dashed ? "4 3" : undefined}
+      markerEnd={markerEnd ? "url(#arrowhead)" : undefined}
+    />
+    {label && (
+      <text x={labelX} y={labelY} textAnchor="middle" fontSize="8" fontWeight="700"
+        fill="currentColor" className="text-muted-foreground" letterSpacing="0.5">
+        {label}
+      </text>
+    )}
+  </g>
 );
 
-/* ------------------------------------------------------------------
-   Main component
------------------------------------------------------------------- */
+/* Side panel boxes */
+const ApiBox: React.FC<{ x: number; y: number; delay: number }> = ({ x, y, delay }) => (
+  <g style={{ opacity: 0, animation: `fadeSlideIn 0.5s ease ${delay}s forwards` }}>
+    <rect x={x} y={y} width={180} height={95} rx={10} fill="var(--background, #fff)"
+      stroke="currentColor" className="text-border" strokeWidth="1.5" />
+    <rect x={x} y={y} width={180} height={18} rx={10} fill="url(#apiHeader)" />
+    <rect x={x} y={y + 10} width={180} height={8} fill="url(#apiHeader)" />
+    <text x={x + 90} y={y + 32} textAnchor="middle" fontSize="8" fontWeight="800" fill="currentColor">
+      APIs (EXTERNAL)
+    </text>
+    {[
+      ["LOSS-RUN", "INSURED INSIGHT", "EXPOSURE-DATA"],
+      ["PRICING", "BROKER-TARGET", ""],
+      ["SUBMISSION SUMMARY", "EXPOSURE-PROFILE", ""],
+      ["LOSS-PROFILE", "FETCH POTENTIAL MAX-LINE", ""],
+    ].map((row, ri) => (
+      <g key={ri}>
+        {row.map((item, ci) => item && (
+          <text key={ci} x={x + 8 + ci * 62} y={y + 46 + ri * 12} fontSize="6.5" fontWeight="600"
+            fill="currentColor" className="text-muted-foreground">
+            {item}
+          </text>
+        ))}
+      </g>
+    ))}
+  </g>
+);
+
+const FuncBox: React.FC<{ x: number; y: number; delay: number }> = ({ x, y, delay }) => (
+  <g style={{ opacity: 0, animation: `fadeSlideIn 0.5s ease ${delay}s forwards` }}>
+    <rect x={x} y={y} width={160} height={70} rx={10} fill="var(--background, #fff)"
+      stroke="currentColor" className="text-border" strokeWidth="1.5" />
+    <rect x={x} y={y} width={160} height={18} rx={10} fill="url(#apiHeader)" />
+    <rect x={x} y={y + 10} width={160} height={8} fill="url(#apiHeader)" />
+    <text x={x + 80} y={y + 32} textAnchor="middle" fontSize="8" fontWeight="800" fill="currentColor">
+      FUNCTIONs (INTERNAL)
+    </text>
+    {["EMAIL COMPOSER", "FILTERING", "CONDITION-CHECKER"].map((fn, i) => (
+      <text key={i} x={x + 80} y={y + 46 + i * 10} textAnchor="middle" fontSize="7" fontWeight="600"
+        fill="currentColor" className="text-muted-foreground">
+        {fn}
+      </text>
+    ))}
+  </g>
+);
+
+/* Flowing pulse dot along the main path */
+const PulseDot: React.FC<{ pathId: string; dur: string; delay: string }> = ({ pathId, dur, delay }) => (
+  <circle r="4" fill="#22d3ee" opacity="0.9">
+    <animateMotion dur={dur} begin={delay} repeatCount="indefinite">
+      <mpath href={`#${pathId}`} />
+    </animateMotion>
+  </circle>
+);
+
+/* ─── Main Component ─── */
 export const SenseArchitecture: React.FC = () => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { setVisible(true); }, []);
+
+  // Layout constants
+  const CX = 280; // center X for main column
+  const svgW = 750;
+  const svgH = 1050;
+
+  // Step positions (y)
+  const S = {
+    userQuery: 30,
+    queryRewriter: 110,
+    resolvable: 210,
+    grounding: 320,
+    foundGT: 420,
+    intentEngine: 570,
+    submissionFinder: 570,
+    taskPlanning: 700,
+    executionEngine: 700,
+    responseHandler: 850,
+    streamResponse: 950,
+  };
+
+  let step = 0;
+  const d = () => (step++ * ANIM_DELAY);
+
   return (
-    <div className="w-full overflow-x-auto py-10">
-      <div className="relative mx-auto" style={{ width: "860px" }}>
+    <div className="w-full overflow-x-auto py-6">
+      <svg
+        viewBox={`0 0 ${svgW} ${svgH}`}
+        className="mx-auto"
+        style={{ maxWidth: "800px", width: "100%", height: "auto" }}
+        role="img"
+        aria-label="Sense AI Architecture Flow Diagram"
+      >
+        <defs>
+          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6" fill="currentColor" className="text-border" />
+          </marker>
+          <linearGradient id="apiHeader" x1="0%" y1="0%" x2="100%">
+            <stop offset="0%" stopColor="#22d3ee" />
+            <stop offset="100%" stopColor="#fbbf24" />
+          </linearGradient>
+        </defs>
 
-        {/* ============================================================
-            ROW 1  ·  User Query   +   Prompt DB (right)
-        ============================================================ */}
-        <div className="flex items-start justify-center gap-0 relative">
-          {/* center column */}
-          <div className="flex flex-col items-center">
-            <Node label="USER QUERY" variant="start" />
-          </div>
-          {/* right side: PROMPT DB */}
-          <div className="absolute right-0 top-0 flex flex-col items-center">
-            <DB label="Prompt DB" />
-          </div>
-        </div>
+        {/* ─── Main flow path for animated dots ─── */}
+        <path id="mainFlow" d={`M${CX},${S.userQuery + 30} L${CX},${S.streamResponse + 15}`}
+          fill="none" stroke="none" />
 
-        {/* ARROW */}
-        <div className="flex justify-center">
-          <Arrow />
-        </div>
+        {/* ═══ ROW 1: USER QUERY ═══ */}
+        <FlowNode x={CX - 65} y={S.userQuery} w={130} h={34} label="USER QUERY" variant="start" delay={d()} />
+        <DBIcon x={580} y={S.userQuery - 10} label="PROMPT DB" delay={d()} />
 
-        {/* ============================================================
-            ROW 2  ·  Query Rewriter  ◄---  Chat-History DB
-        ============================================================ */}
-        <div className="relative flex items-center justify-center">
-          <Node label={<>QUERY<br />REWRITER</>} variant="process" />
-          {/* Right side DB with dashed link */}
-          <div className="absolute right-0 flex items-center gap-0">
-            <DotLine />
-            <DB label="Chat‑History" />
-          </div>
-        </div>
+        {/* Arrow down */}
+        <ArrowLine points={`${CX},${S.userQuery + 34} ${CX},${S.queryRewriter}`} delay={d()} />
 
-        {/* ARROW + label */}
-        <div className="flex justify-center">
-          <Arrow label="RQ / Rewritten Query" />
-        </div>
+        {/* ═══ ROW 2: QUERY REWRITER ═══ */}
+        <FlowNode x={CX - 70} y={S.queryRewriter} w={140} h={55} label={"QUERY\nREWRITER"} variant="process" delay={d()} />
+        <DBIcon x={560} y={S.queryRewriter} label="CHAT-HISTORY" delay={d()} />
+        {/* Dashed line to Chat-History */}
+        <ArrowLine points={`${CX + 70},${S.queryRewriter + 27} ${560},${S.queryRewriter + 20}`}
+          delay={d()} dashed />
 
-        {/* ============================================================
-            ROW 3  ·  RESOLVABLE? decision
-        ============================================================ */}
-        <div className="relative flex items-center justify-center">
-          <Node label="RESOLVABLE?" variant="decision" />
-          {/* YES label going down */}
-        </div>
+        {/* Arrow down with label */}
+        <ArrowLine points={`${CX},${S.queryRewriter + 55} ${CX},${S.resolvable}`}
+          delay={d()} label="RQ / REWRITTEN QUERY" labelX={CX} labelY={S.queryRewriter + 75} />
 
-        {/* Split: NO → left bypass, YES → down */}
-        <div className="relative flex justify-center">
-          {/* vertical down (YES path) */}
-          <div className="flex flex-col items-center">
-            <div className="flex items-center">
-              {/* NO — left bypass line */}
-              <div className="flex flex-col items-end w-16 mr-2">
-                <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">No</span>
-                <div className="w-px h-28 border-r-2 border-dashed border-slate-300 self-end" />
-              </div>
-              {/* YES path */}
-              <div className="flex flex-col items-center">
-                <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">Yes · RQ</span>
-                <Arrow />
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* ═══ ROW 3: RESOLVABLE? ═══ */}
+        <FlowNode x={CX - 65} y={S.resolvable} w={130} h={34} label="RESOLVABLE?" variant="decision" delay={d()} />
+        <DBIcon x={560} y={S.resolvable - 10} label="CHAT-TRACE" delay={d()} />
 
-        {/* ============================================================
-            ROW 4  ·  Grounding Module  ◄---  Knowledge Ground Truth
-        ============================================================ */}
-        <div className="relative flex items-center justify-center">
-          <Node label={<>GROUNDING<br />MODULE</>} variant="process" />
-          <div className="absolute right-0 flex items-center">
-            <DotLine />
-            <DB label="Knowledge / Query Ground Truth" />
-          </div>
-        </div>
+        {/* YES path down */}
+        <ArrowLine points={`${CX},${S.resolvable + 34} ${CX},${S.grounding}`}
+          delay={d()} label="YES" labelX={CX - 20} labelY={S.resolvable + 55} />
+        <text x={CX + 5} y={S.grounding - 8} fontSize="8" fontWeight="700"
+          fill="currentColor" className="text-muted-foreground" textAnchor="middle"
+          style={{ opacity: 0, animation: `fadeSlideIn 0.4s ease ${d()}s forwards` }}>RQ</text>
 
-        <div className="flex justify-center">
-          <Arrow />
-        </div>
+        {/* ═══ ROW 4: GROUNDING MODULE ═══ */}
+        <FlowNode x={CX - 70} y={S.grounding} w={140} h={55} label={"GROUNDING\nMODULE"} variant="process" delay={d()} />
+        <DBIcon x={560} y={S.grounding} label={"KNOWLEDGE / QUERY\nGROUND TRUTH"} delay={d()} />
+        <ArrowLine points={`${CX + 70},${S.grounding + 27} ${560},${S.grounding + 20}`}
+          delay={d()} dashed />
 
-        {/* ============================================================
-            ROW 5  ·  FOUND GROUND TRUTH? decision
-        ============================================================ */}
-        <div className="flex items-center justify-center">
-          <Node label="FOUND GROUND TRUTH?" variant="decision" />
-        </div>
+        {/* Arrow down */}
+        <ArrowLine points={`${CX},${S.grounding + 55} ${CX},${S.foundGT}`} delay={d()} />
 
-        {/* Split NO → two branches */}
-        <div className="flex justify-center mt-2 mb-1">
-          <span className="text-[9px] font-bold text-slate-400 uppercase">No ↓</span>
-        </div>
+        {/* ═══ ROW 5: FOUND GROUND TRUTH? ═══ */}
+        <FlowNode x={CX - 85} y={S.foundGT} w={170} h={34} label="FOUND GROUND TRUTH?" variant="decision" delay={d()} />
 
-        {/* ============================================================
-            ROW 6  ·  Intent Engine  |  Submission Finder
-        ============================================================ */}
-        <div className="flex items-start justify-center gap-20">
-          {/* Intent Engine */}
-          <div className="flex flex-col items-center">
-            <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">RQ</span>
-            <Arrow />
-            <Node label={<>INTENT<br />ENGINE</>} variant="process" />
-          </div>
-          {/* Submission Finder */}
-          <div className="flex flex-col items-center">
-            <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">RQ</span>
-            <Arrow />
-            <Node label={<>SUBMISSION<br />FINDER</>} variant="process" />
-          </div>
-        </div>
+        {/* YES path – left bypass down to Response Handler */}
+        <ArrowLine
+          points={`${CX - 85},${S.foundGT + 17} 60,${S.foundGT + 17} 60,${S.responseHandler + 25}`}
+          delay={d()} label="YES" labelX={45} labelY={S.foundGT + 50} markerEnd={false}
+        />
+        {/* NO path down */}
+        <ArrowLine points={`${CX},${S.foundGT + 34} ${CX},${S.foundGT + 70}`}
+          delay={d()} label="NO" labelX={CX + 15} labelY={S.foundGT + 55} markerEnd={false} />
 
-        {/* Converge arrows down to Task Engine */}
-        <div className="relative flex justify-center mt-2">
-          <div className="w-52 h-px border-t-2 border-slate-400" />
-        </div>
-        <div className="flex justify-center">
-          <Arrow label="RQ" />
-        </div>
+        {/* Split to Intent Engine & Submission Finder */}
+        {/* Horizontal line */}
+        <ArrowLine
+          points={`${CX},${S.foundGT + 70} ${CX - 80},${S.foundGT + 70} ${CX - 80},${S.intentEngine}`}
+          delay={d()} markerEnd label="RQ" labelX={CX - 80} labelY={S.intentEngine - 8} />
+        <ArrowLine
+          points={`${CX},${S.foundGT + 70} ${CX + 80},${S.foundGT + 70} ${CX + 80},${S.submissionFinder}`}
+          delay={d()} markerEnd label="RQ" labelX={CX + 80} labelY={S.submissionFinder - 8} />
 
-        {/* ============================================================
-            ROW 7  ·  Task Planning Engine  ↔  Execution Engine
-        ============================================================ */}
-        <div className="relative flex items-center justify-center gap-12">
-          {/* Task Planning */}
-          <Node label={<>TASK PLANNING<br />ENGINE</>} variant="process" />
+        {/* ═══ ROW 6: INTENT ENGINE & SUBMISSION FINDER ═══ */}
+        <FlowNode x={CX - 150} y={S.intentEngine} w={140} h={55} label={"INTENT\nENGINE"} variant="process" delay={d()} />
+        <FlowNode x={CX + 10} y={S.submissionFinder} w={140} h={55} label={"SUBMISSION\nFINDER"} variant="process" delay={d()} />
 
-          {/* Bidirectional arrows & labels */}
-          <div className="flex flex-col items-center text-[9px] font-bold text-slate-500 gap-1">
-            <span>PAYLOAD →</span>
-            <div className="flex gap-1">
-              <div className="w-10 h-0.5 bg-cyan-500" />
-              <div className="w-10 h-0.5 bg-cyan-500" />
-            </div>
-            <span>← DATA</span>
-          </div>
+        {/* NO path from RESOLVABLE going far left, down to Intent Engine */}
+        <ArrowLine
+          points={`${CX - 65},${S.resolvable + 17} 30,${S.resolvable + 17} 30,${S.intentEngine + 27} ${CX - 150},${S.intentEngine + 27}`}
+          delay={d()} label="NO" labelX={15} labelY={S.resolvable + 50} markerEnd
+        />
 
-          {/* Execution Engine */}
-          <div className="flex flex-col items-center">
-            <Node label={<>EXECUTION<br />ENGINE</>} variant="process" />
-            {/* External APIs / Internal functions float to the right */}
-            <div className="absolute right-0 top-0 flex flex-col gap-4">
-              {/* APIs (External) */}
-              <div className="relative rounded-xl border-2 border-primary/30 bg-background p-3 shadow-sm w-52">
-                <div className="absolute top-0 inset-x-0 h-5 rounded-t-xl bg-gradient-to-r from-cyan-400 to-amber-300" />
-                <p className="text-[9px] font-bold text-foreground text-center mt-5 mb-2">APIs (EXTERNAL)</p>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[8px] text-muted-foreground font-semibold">
-                  <span>LOSS‑RUN</span><span>INSURED INSIGHT</span>
-                  <span>PRICING</span><span>BROKER‑TARGET</span>
-                  <span>SUBMISSION SUMMARY</span><span>EXPOSURE‑PROFILE</span>
-                  <span className="col-span-2 text-center">FETCH POTENTIAL MAX‑LINE</span>
-                </div>
-              </div>
-              {/* Functions (Internal) */}
-              <div className="relative rounded-xl border-2 border-primary/30 bg-background p-3 shadow-sm w-52">
-                <div className="absolute top-0 inset-x-0 h-5 rounded-t-xl bg-gradient-to-r from-cyan-400 to-amber-300" />
-                <p className="text-[9px] font-bold text-foreground text-center mt-5 mb-2">FUNCTIONS (INTERNAL)</p>
-                <div className="flex flex-col gap-1 text-[8px] text-muted-foreground font-semibold text-center">
-                  <span>EMAIL COMPOSER</span>
-                  <span>FILTERING</span>
-                  <span>CONDITION‑CHECKER</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Converge down to Task Planning */}
+        <ArrowLine
+          points={`${CX - 80},${S.intentEngine + 55} ${CX - 80},${S.taskPlanning} ${CX - 60},${S.taskPlanning + 27}`}
+          delay={d()} markerEnd={false} />
+        <ArrowLine
+          points={`${CX + 80},${S.submissionFinder + 55} ${CX + 80},${S.taskPlanning} ${CX + 60},${S.taskPlanning + 27}`}
+          delay={d()} markerEnd={false} />
 
-        {/* ARROW + context-pack label */}
-        <div className="flex justify-center">
-          <Arrow label="Context‑Pack" />
-        </div>
+        {/* ═══ ROW 7: TASK PLANNING ENGINE ═══ */}
+        <FlowNode x={CX - 60} y={S.taskPlanning} w={120} h={55} label={"TASK\nPLANNING\nENGINE"} variant="process" delay={d()} />
 
-        {/* ============================================================
-            ROW 8  ·  Response Handler Engine
-        ============================================================ */}
-        <div className="flex justify-center">
-          <div className="flex flex-col items-center">
-            <span className="text-[9px] font-bold text-slate-400 uppercase mb-1">RQ</span>
-            <Node label={<>RESPONSE HANDLER<br />ENGINE</>} variant="process" />
-          </div>
-        </div>
+        {/* INTENT=='OTHER' label going left back to Response Handler */}
+        <ArrowLine
+          points={`${CX - 60},${S.taskPlanning + 40} 60,${S.taskPlanning + 40} 60,${S.responseHandler + 25}`}
+          delay={d()} label={"INTENT == 'OTHER'"} labelX={100} labelY={S.taskPlanning + 65} markerEnd
+        />
 
-        <div className="flex justify-center">
-          <Arrow />
-        </div>
+        {/* Bidirectional to Execution Engine */}
+        <g style={{ opacity: 0, animation: `fadeSlideIn 0.4s ease ${d()}s forwards` }}>
+          <line x1={CX + 60} y1={S.taskPlanning + 20} x2={CX + 180} y2={S.executionEngine + 20}
+            stroke="currentColor" className="text-border" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
+          <line x1={CX + 180} y1={S.executionEngine + 35} x2={CX + 60} y2={S.taskPlanning + 35}
+            stroke="currentColor" className="text-border" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
+          <text x={CX + 120} y={S.taskPlanning + 14} textAnchor="middle" fontSize="7" fontWeight="700"
+            fill="currentColor" className="text-muted-foreground">PAYLOAD</text>
+          <text x={CX + 120} y={S.taskPlanning + 50} textAnchor="middle" fontSize="6" fontWeight="700"
+            fill="currentColor" className="text-muted-foreground">RAW/POST-PROCESSED</text>
+          <text x={CX + 120} y={S.taskPlanning + 58} textAnchor="middle" fontSize="6" fontWeight="700"
+            fill="currentColor" className="text-muted-foreground">SUBMISSION DATA</text>
+        </g>
 
-        {/* ============================================================
-            ROW 9  ·  Stream Response
-        ============================================================ */}
-        <div className="flex justify-center">
-          <Node label="STREAM RESPONSE" variant="end" />
-        </div>
+        {/* EXECUTION ENGINE */}
+        <FlowNode x={CX + 180} y={S.executionEngine} w={120} h={55} label={"EXECUTION\nENGINE"} variant="process" delay={d()} />
 
-        {/* Animated flowing data dots overlay */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px pointer-events-none">
-          {[0, 1.5, 3].map((d) => (
-            <div
-              key={d}
-              className="absolute w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_2px_rgba(34,211,238,0.7)]"
-              style={{
-                top: 0,
-                animation: `flowDown 3s linear ${d}s infinite`,
-              }}
-            />
-          ))}
-        </div>
+        {/* API & Function boxes */}
+        <ApiBox x={540} y={S.executionEngine - 20} delay={d()} />
+        <FuncBox x={540} y={S.executionEngine + 85} delay={d()} />
+        {/* Dashed lines to boxes */}
+        <ArrowLine points={`${CX + 300},${S.executionEngine + 27} ${540},${S.executionEngine + 27}`}
+          delay={d()} dashed markerEnd={false} />
 
-      </div>
+        {/* Arrow down: Task Planning → Context-Pack → Response Handler */}
+        <ArrowLine points={`${CX},${S.taskPlanning + 55} ${CX},${S.responseHandler}`}
+          delay={d()} label="CONTEXT-PACK" labelX={CX + 50} labelY={S.taskPlanning + 85} />
 
-      {/* Keyframe for flowing dots */}
+        {/* RQ label */}
+        <text x={CX + 5} y={S.responseHandler - 8} fontSize="8" fontWeight="700"
+          fill="currentColor" className="text-muted-foreground" textAnchor="middle"
+          style={{ opacity: 0, animation: `fadeSlideIn 0.4s ease ${d()}s forwards` }}>RQ</text>
+
+        {/* ═══ ROW 8: RESPONSE HANDLER ENGINE ═══ */}
+        <FlowNode x={CX - 75} y={S.responseHandler} w={150} h={55} label={"RESPONSE HANDLER\nENGINE"} variant="process" delay={d()} />
+
+        {/* YES merge line into Response Handler from left */}
+        <ArrowLine points={`60,${S.responseHandler + 25} ${CX - 75},${S.responseHandler + 25}`}
+          delay={d()} markerEnd />
+
+        {/* Arrow down */}
+        <ArrowLine points={`${CX},${S.responseHandler + 55} ${CX},${S.streamResponse}`} delay={d()} />
+
+        {/* ═══ ROW 9: STREAM RESPONSE ═══ */}
+        <FlowNode x={CX - 75} y={S.streamResponse} w={150} h={34} label="STREAM RESPONSE" variant="end" delay={d()} />
+
+        {/* ─── Animated pulse dots along main path ─── */}
+        <path id="pulseMain" d={`M${CX},${S.userQuery + 34} L${CX},${S.streamResponse}`}
+          fill="none" stroke="none" />
+        {visible && (
+          <>
+            <PulseDot pathId="pulseMain" dur="6s" delay="0s" />
+            <PulseDot pathId="pulseMain" dur="6s" delay="2s" />
+            <PulseDot pathId="pulseMain" dur="6s" delay="4s" />
+          </>
+        )}
+
+        {/* Glow filter for dots */}
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+      </svg>
+
       <style>{`
-        @keyframes flowDown {
-          0%   { top: 0;    opacity: 0; }
-          5%   { opacity: 1; }
-          95%  { opacity: 1; }
-          100% { top: 100%; opacity: 0; }
+        @keyframes fadeSlideIn {
+          0% { opacity: 0; transform: translateY(10px); }
+          100% { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>
