@@ -66,14 +66,10 @@ const FlowNode: React.FC<FlowNodeProps> = ({ x, y, w, h, label, variant, delay }
   );
 };
 
-/* Database icon */
-const DBIcon: React.FC<{ x: number; y: number; label: string; delay: number }> = ({ x, y, label, delay }) => (
+/* Database label (text only, no icon) */
+const DBLabel: React.FC<{ x: number; y: number; label: string; delay: number }> = ({ x, y, label, delay }) => (
   <g style={{ opacity: 0, animation: `fadeSlideIn 0.5s ease ${delay}s forwards` }}>
-    <ellipse cx={x + 18} cy={y + 6} rx={16} ry={5} fill="#f59e0b" />
-    <rect x={x + 2} y={y + 6} width={32} height={14} fill="#fbbf24" />
-    <ellipse cx={x + 18} cy={y + 20} rx={16} ry={5} fill="#f59e0b" />
-    <ellipse cx={x + 18} cy={y + 13} rx={16} ry={5} fill="none" stroke="#f59e0b" strokeWidth="0.5" />
-    <text x={x + 18} y={y + 36} textAnchor="middle" fontSize="8" fontWeight="700"
+    <text x={x} y={y} textAnchor="middle" fontSize="9" fontWeight="700"
       fill="currentColor" className="text-muted-foreground" letterSpacing="0.8">
       {label}
     </text>
