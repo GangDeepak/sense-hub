@@ -302,11 +302,11 @@ export const SenseArchitecture: React.FC = () => {
             stroke="currentColor" className="text-border" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
           <line x1={CX + 200} y1={S.executionEngine + 35} x2={CX + 60} y2={S.taskPlanning + 35}
             stroke="currentColor" className="text-border" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
-          <text x={CX + 120} y={S.taskPlanning + 14} textAnchor="middle" fontSize="7" fontWeight="700"
+          <text x={CX + 130} y={S.taskPlanning + 14} textAnchor="middle" fontSize="7" fontWeight="700"
             fill="currentColor" className="text-muted-foreground">PAYLOAD</text>
-          <text x={CX + 120} y={S.taskPlanning + 50} textAnchor="middle" fontSize="6" fontWeight="700"
+          <text x={CX + 130} y={S.taskPlanning + 50} textAnchor="middle" fontSize="6" fontWeight="700"
             fill="currentColor" className="text-muted-foreground">RAW/POST-PROCESSED</text>
-          <text x={CX + 120} y={S.taskPlanning + 58} textAnchor="middle" fontSize="6" fontWeight="700"
+          <text x={CX + 130} y={S.taskPlanning + 58} textAnchor="middle" fontSize="6" fontWeight="700"
             fill="currentColor" className="text-muted-foreground">SUBMISSION DATA</text>
         </g>
 
