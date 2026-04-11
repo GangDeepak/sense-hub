@@ -298,9 +298,9 @@ export const SenseArchitecture: React.FC = () => {
 
         {/* Bidirectional to Execution Engine */}
         <g style={{ opacity: 0, animation: `fadeSlideIn 0.4s ease ${d()}s forwards` }}>
-          <line x1={CX + 60} y1={S.taskPlanning + 20} x2={CX + 180} y2={S.executionEngine + 20}
+          <line x1={CX + 60} y1={S.taskPlanning + 20} x2={CX + 200} y2={S.executionEngine + 20}
             stroke="currentColor" className="text-border" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
-          <line x1={CX + 180} y1={S.executionEngine + 35} x2={CX + 60} y2={S.taskPlanning + 35}
+          <line x1={CX + 200} y1={S.executionEngine + 35} x2={CX + 60} y2={S.taskPlanning + 35}
             stroke="currentColor" className="text-border" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
           <text x={CX + 120} y={S.taskPlanning + 14} textAnchor="middle" fontSize="7" fontWeight="700"
             fill="currentColor" className="text-muted-foreground">PAYLOAD</text>
