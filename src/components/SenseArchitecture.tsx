@@ -208,14 +208,14 @@ export const SenseArchitecture: React.FC = () => {
 
         {/* ═══ ROW 1: USER QUERY ═══ */}
         <FlowNode x={CX - 65} y={S.userQuery} w={130} h={34} label="USER QUERY" variant="start" delay={d()} />
-        <DBIcon x={580} y={S.userQuery - 10} label="PROMPT DB" delay={d()} />
+        <DBLabel x={620} y={S.userQuery + 20} label="PROMPT DB" delay={d()} />
 
         {/* Arrow down */}
         <ArrowLine points={`${CX},${S.userQuery + 34} ${CX},${S.queryRewriter}`} delay={d()} />
 
         {/* ═══ ROW 2: QUERY REWRITER ═══ */}
         <FlowNode x={CX - 70} y={S.queryRewriter} w={140} h={55} label={"QUERY\nREWRITER"} variant="process" delay={d()} />
-        <DBIcon x={560} y={S.queryRewriter} label="CHAT-HISTORY" delay={d()} />
+        <DBLabel x={620} y={S.queryRewriter + 30} label="CHAT-HISTORY" delay={d()} />
         {/* Dashed line to Chat-History */}
         <ArrowLine points={`${CX + 70},${S.queryRewriter + 27} ${560},${S.queryRewriter + 20}`}
           delay={d()} dashed />
@@ -226,7 +226,7 @@ export const SenseArchitecture: React.FC = () => {
 
         {/* ═══ ROW 3: RESOLVABLE? ═══ */}
         <FlowNode x={CX - 65} y={S.resolvable} w={130} h={34} label="RESOLVABLE?" variant="decision" delay={d()} />
-        <DBIcon x={560} y={S.resolvable - 10} label="CHAT-TRACE" delay={d()} />
+        <DBLabel x={620} y={S.resolvable + 20} label="CHAT-TRACE" delay={d()} />
 
         {/* YES path down */}
         <ArrowLine points={`${CX},${S.resolvable + 34} ${CX},${S.grounding}`}
@@ -237,8 +237,8 @@ export const SenseArchitecture: React.FC = () => {
 
         {/* ═══ ROW 4: GROUNDING MODULE ═══ */}
         <FlowNode x={CX - 70} y={S.grounding} w={140} h={55} label={"GROUNDING\nMODULE"} variant="process" delay={d()} />
-        <DBIcon x={560} y={S.grounding} label={"KNOWLEDGE / QUERY\nGROUND TRUTH"} delay={d()} />
-        <ArrowLine points={`${CX + 70},${S.grounding + 27} ${560},${S.grounding + 20}`}
+        <DBLabel x={620} y={S.grounding + 30} label="KNOWLEDGE / QUERY GROUND TRUTH" delay={d()} />
+        <ArrowLine points={`${CX + 70},${S.grounding + 27} ${560},${S.grounding + 27}`}
           delay={d()} dashed />
 
         {/* Arrow down */}
