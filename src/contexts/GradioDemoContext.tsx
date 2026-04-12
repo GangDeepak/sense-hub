@@ -36,15 +36,20 @@ export function GradioDemoProvider({ children }: { children: ReactNode }) {
   const [sessionId, setSessionId] = useState("default_session");
   const [sessions, setSessions] = useState<{ session_uuid: string; created_at?: string; session_name?: string; version?: string }[]>([]);
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+  const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
   const [referenceQueries, setReferenceQueries] = useState<any[]>([]);
 
   const fetchReferenceQueries = async () => {
     try {
+      console.log(`[GradioDemoContext] Fetching reference queries from: ${API_BASE}/grounding/all_query/query_memory?with_vectors=false`);
       const res = await fetch(`${API_BASE}/grounding/all_query/query_memory_test?with_vectors=false`);
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(`[GradioDemoContext] Failed to fetch reference queries: ${res.status} ${res.statusText}`);
+        return;
+      }
       const data = await res.json();
+      console.log("[GradioDemoContext] Raw reference queries data:", data);
 
       // API returns: { status, collection_name, count, queries: string[] }
       // Normalise to objects with a `user_query` field so the suggestion

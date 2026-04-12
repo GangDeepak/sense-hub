@@ -13,7 +13,7 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { SplitPanelWrapper, FieldBlock } from "@/components/grounding/SplitDetailPanel";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 export interface StatusMessage {
   icon?: string;

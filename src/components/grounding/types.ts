@@ -1,6 +1,6 @@
 import { getAuthHeaders } from "@/utils/token";
 
-export const BASE_URL = "http://127.0.0.1:8000";
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export const QUERY_COLLECTIONS = ["query_memory", "query_memory_dev", "query_memory_prod"];
 export const KNOWLEDGE_COLLECTIONS = ["knowledge_memory", "knowledge_memory_dev", "knowledge_memory_prod"];

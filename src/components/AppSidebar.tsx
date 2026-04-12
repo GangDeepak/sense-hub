@@ -34,7 +34,7 @@ import { useGradioDemoSafe } from "@/hooks/useGradioDemoSafe";
 import { INSURED_LIST } from "@/contexts/GradioDemoContext";
 import { useEffect } from "react";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const allItems: { title: string; url: string; icon: typeof Home; roles: UserRole[] }[] = [
   { title: "Home", url: "/", icon: Home, roles: ["user", "admin"] },
