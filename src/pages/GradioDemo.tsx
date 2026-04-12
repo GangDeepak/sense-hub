@@ -50,13 +50,12 @@ const MODULE_OUTPUT_KEY_ORDER = [
   "retrieved_knowledges",
   "retrieved_queries",
   "tool_response",
+  "filtered_knowledges",
   "final_pipeline_json",
   "emails",
   "context_pack",
-  "bot_response_text",
   "metrics",
-  "created_at",
-  "_id",
+  "follow_up_queries"
 ] as const;
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -326,7 +325,7 @@ function AssistantMessage({
           <div className="mb-4 mt-2 relative animate-fade-in flex flex-col gap-3">
             {/* The single continuous vertical line */}
             <div className="absolute left-[8px] top-[20px] bottom-[10px] w-px bg-border/60 z-0" />
-            
+
             {/* The individual statuses pulled from SSE objects */}
             {statusMessages!.map((status, idx) => {
               // Map standard backend names to Lucide icons
@@ -496,6 +495,7 @@ const GradioDemo = () => {
   // activeDetail: which message index's module/email panel is open
   const [activeDetail, setActiveDetail] = useState<{ type: "email" | "modules"; msgIndex: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-scroll to bottom on message or container size change
@@ -505,23 +505,30 @@ const GradioDemo = () => {
     if (!viewport) return;
 
     const scrollToBottom = () => {
+      // 1. Safest way for Radix ScrollArea
       viewport.scrollTop = viewport.scrollHeight;
+      // 2. Also try scrollIntoView if end ref is available
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: "instant" as ScrollBehavior, block: "end" });
+      }
     };
 
-    // 1. Initial scroll for new messages (synchronous update)
     scrollToBottom();
+    const timeoutId = setTimeout(scrollToBottom, 100);
 
-    // 2. Re-scroll on any layout changes (interactive resizing OR streaming content height changes)
     const observer = new ResizeObserver(() => requestAnimationFrame(scrollToBottom));
     observer.observe(viewport);
 
-    // Radix places the actual content in the first child of the viewport
     const content = viewport.firstElementChild;
     if (content) {
       observer.observe(content);
     }
 
-  }, [messages]);
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
+  }, [messages, isStreaming, activeDetail]);
 
   // Load chat history when session changes
   useEffect(() => {
@@ -545,7 +552,7 @@ const GradioDemo = () => {
             loaded.push({
               role: "user",
               content: chat.user_query,
-              timestamp: chat.created_at || ""
+              timestamp: chat.request_received_at || chat.created_at || ""
             });
           }
 
@@ -604,14 +611,7 @@ const GradioDemo = () => {
           }
 
           // ── Build assistant message with small offset ────────────────────
-          let assistantTime = chat.created_at || "";
-          if (assistantTime) {
-            try {
-              const d = new Date(assistantTime);
-              d.setSeconds(d.getSeconds() + 2); // 2s offset for visual separation
-              assistantTime = d.toISOString();
-            } catch { /* fallback */ }
-          }
+          let assistantTime = chat.request_completed_at || chat.created_at || "";
 
           const { bot_response_text: _omit, ...rest } = chat;
 
@@ -621,7 +621,7 @@ const GradioDemo = () => {
             timestamp: assistantTime,
             moduleOutputs: Object.keys(rest).length > 0 ? rest : undefined,
             emailDraft,
-            followUp: chat.follow_up || chat.chat_response?.follow_up || [],
+            followUp: chat.follow_up_queries || chat.follow_up || chat.chat_response?.follow_up || [],
           });
         }
 
@@ -636,7 +636,8 @@ const GradioDemo = () => {
     const text = typeof overrideInput === "string" ? overrideInput.trim() : input.trim();
     if (!text || isStreaming || !selectedInsured) return;
 
-    const userMsg: ChatMessage = { role: "user", content: text, timestamp: new Date().toISOString() };
+    const now = new Date().toISOString();
+    const userMsg: ChatMessage = { role: "user", content: text, timestamp: now };
     setMessages((prev) => {
       if (prev.length === 0) {
         updateSessionName(sessionId, text.slice(0, 50));
@@ -665,6 +666,7 @@ const GradioDemo = () => {
           insured_name: selectedInsured?.insured_name || "",
           ref_id: selectedInsured?.ref_id === "landing_page" ? "" : (selectedInsured?.ref_id || ""),
           web_search: webSearch,
+          request_received_at: now,
         }),
       });
 
@@ -714,8 +716,6 @@ const GradioDemo = () => {
                     updated[updated.length - 1] = {
                       ...last,
                       content: last.content + chunk,
-                      // Set timestamp on first chunk if not set
-                      timestamp: last.timestamp || new Date().toISOString(),
                     };
                     return updated;
                   });
@@ -731,6 +731,7 @@ const GradioDemo = () => {
                     updated[updated.length - 1] = {
                       ...updated[updated.length - 1],
                       content: finalText,
+                      timestamp: new Date().toISOString(),
                     };
                     return updated;
                   });
@@ -753,6 +754,7 @@ const GradioDemo = () => {
                     updated[updated.length - 1] = {
                       ...updated[updated.length - 1],
                       emailDraft: draft,
+                      timestamp: new Date().toISOString(),
                     };
                     return updated;
                   });
@@ -793,8 +795,8 @@ const GradioDemo = () => {
               if (event === "status") {
                 const statusData = parsed.chat_response?.content?.message;
                 // Normalize to objects regardless of if backend sends string or { icon, message }
-                const normalizedStatus = typeof statusData === "string" 
-                  ? { message: statusData } 
+                const normalizedStatus = typeof statusData === "string"
+                  ? { message: statusData }
                   : statusData;
 
                 if (normalizedStatus && normalizedStatus.message) {
@@ -975,6 +977,7 @@ const GradioDemo = () => {
               />
             );
           })}
+          <div ref={messagesEndRef} className="h-px w-full shrink-0" />
         </div>
       </ScrollArea>
 
