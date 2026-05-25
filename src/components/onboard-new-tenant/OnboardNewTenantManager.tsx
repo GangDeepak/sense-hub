@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Eye, FileText, Files, Sparkles, UploadCloud, X } from "lucide-react";
+import { Eye, FileText, Files, Sparkles, Trash2, UploadCloud, Wand2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 interface UploadedPdf {
@@ -177,46 +177,30 @@ export default function OnboardNewTenantManager() {
               </div>
 
               {uploadedPdfs.length > 0 && (
-                <div className="overflow-hidden rounded-xl border bg-card">
-                  <div className="flex items-center justify-between border-b bg-muted/30 px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                        <CheckCircle2 className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold">
-                          {uploadedPdfs.length} {uploadedPdfs.length === 1 ? "document" : "documents"} ready
-                        </p>
-                        <p className="text-xs text-muted-foreground">Total size: {formatBytes(totalSize)}</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={clearAll} className="text-muted-foreground hover:text-destructive">
-                      Clear all
-                    </Button>
-                  </div>
-                  <div className="divide-y">
+                <div className="overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-b from-card to-muted/10 shadow-sm">
+                  <ul className="divide-y divide-border/50">
                     {uploadedPdfs.map(({ file, url, domain, lob }, index) => (
-                      <div
+                      <li
                         key={`${file.name}-${file.lastModified}-${index}`}
-                        className="group grid grid-cols-[minmax(180px,1.5fr)_minmax(170px,1fr)_minmax(150px,1fr)_auto] items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-muted/30 max-md:grid-cols-1 max-md:items-start"
+                        className="group relative grid grid-cols-[minmax(200px,1.6fr)_minmax(180px,1fr)_minmax(160px,1fr)_auto] items-center gap-4 px-5 py-4 text-sm transition-all hover:bg-primary/[0.03] max-md:grid-cols-1 max-md:items-start"
                       >
                         <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 text-primary ring-1 ring-primary/10">
                             <FileText className="h-5 w-5" />
                           </div>
                           <div className="min-w-0">
-                            <p className="truncate font-medium" title={file.name}>
+                            <p className="truncate font-semibold text-foreground" title={file.name}>
                               {file.name}
                             </p>
                             <p className="text-xs text-muted-foreground">{formatBytes(file.size)}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="shrink-0 text-[10px] font-medium uppercase tracking-wide">
+                          <Badge variant="outline" className="shrink-0 border-primary/20 bg-primary/5 text-[10px] font-semibold uppercase tracking-wider text-primary">
                             Domain
                           </Badge>
                           <Select value={domain} onValueChange={(value) => updatePdfField(index, "domain", value)}>
-                            <SelectTrigger className="h-8 min-w-[150px] bg-background text-xs">
+                            <SelectTrigger className="h-9 min-w-[150px] rounded-lg bg-background text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -229,11 +213,11 @@ export default function OnboardNewTenantManager() {
                           </Select>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="shrink-0 text-[10px] font-medium uppercase tracking-wide">
+                          <Badge variant="outline" className="shrink-0 border-primary/20 bg-primary/5 text-[10px] font-semibold uppercase tracking-wider text-primary">
                             LoB
                           </Badge>
                           <Select value={lob} onValueChange={(value) => updatePdfField(index, "lob", value)}>
-                            <SelectTrigger className="h-8 min-w-[120px] bg-background text-xs">
+                            <SelectTrigger className="h-9 min-w-[130px] rounded-lg bg-background text-xs">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -250,7 +234,7 @@ export default function OnboardNewTenantManager() {
                             type="button"
                             onClick={() => viewPdf(url)}
                             title="View PDF"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary hover:scale-105"
                           >
                             <Eye className="h-4 w-4" />
                             <span className="sr-only">View</span>
@@ -258,24 +242,28 @@ export default function OnboardNewTenantManager() {
                           <button
                             type="button"
                             onClick={() => removePdf(index)}
-                            title="Remove PDF"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                            title="Delete PDF"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive hover:scale-105"
                           >
-                            <X className="h-4 w-4" />
-                            <span className="sr-only">Remove</span>
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete</span>
                           </button>
                         </div>
-                      </div>
+                      </li>
                     ))}
-                  </div>
-                  <div className="flex items-center justify-end gap-2 border-t bg-muted/20 px-4 py-3">
-                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                      <UploadCloud className="mr-2 h-4 w-4" />
-                      Add more
-                    </Button>
-                    <Button size="sm" className="gap-2">
-                      <Sparkles className="h-4 w-4" />
-                      Process documents
+                  </ul>
+                  <div className="flex items-center justify-between gap-3 border-t border-border/50 bg-gradient-to-r from-muted/30 via-muted/10 to-primary/5 px-5 py-4">
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">{uploadedPdfs.length}</span>{" "}
+                      {uploadedPdfs.length === 1 ? "file" : "files"} · {formatBytes(totalSize)}
+                    </p>
+                    <Button
+                      size="sm"
+                      className="group/btn relative gap-2 overflow-hidden bg-gradient-to-r from-primary to-primary/80 px-5 shadow-md transition-all hover:shadow-lg hover:shadow-primary/25"
+                    >
+                      <Wand2 className="h-4 w-4 transition-transform group-hover/btn:rotate-12" />
+                      Generate Guideline
+                      <Sparkles className="h-3.5 w-3.5 opacity-70" />
                     </Button>
                   </div>
                 </div>
