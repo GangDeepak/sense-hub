@@ -2,8 +2,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, FileText, Files, Sparkles, Trash2, UploadCloud, Wand2 } from "lucide-react";
+import { Eye, FileText, Files, Sparkles, Trash2, CloudUpload as UploadCloud, Wand as Wand2, CircleCheck as CheckCircle2, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import rulesData from "@/mock_data/onboard-guideline";
 
 interface UploadedPdf {
   file: File;
@@ -26,6 +27,10 @@ const formatBytes = (bytes: number) => {
 export default function OnboardNewTenantManager() {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedPdfs, setUploadedPdfs] = useState<UploadedPdf[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedRules, setGeneratedRules] = useState<typeof rulesData.rules>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [expandedRules, setExpandedRules] = useState<Set<number>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadedPdfsRef = useRef<UploadedPdf[]>([]);
 
@@ -81,6 +86,30 @@ export default function OnboardNewTenantManager() {
     () => uploadedPdfs.reduce((sum, p) => sum + p.file.size, 0),
     [uploadedPdfs],
   );
+
+  const handleGenerateGuidelines = async () => {
+    setIsGenerating(true);
+    setShowResults(false);
+    setGeneratedRules([]);
+
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    setGeneratedRules(rulesData.rules);
+    setShowResults(true);
+    setIsGenerating(false);
+  };
+
+  const toggleRule = (index: number) => {
+    setExpandedRules((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="h-full overflow-y-auto bg-gradient-to-br from-background via-background to-muted/30 p-6">
@@ -259,11 +288,22 @@ export default function OnboardNewTenantManager() {
                     </p>
                     <Button
                       size="sm"
-                      className="group/btn relative gap-2 overflow-hidden bg-gradient-to-r from-primary to-primary/80 px-5 shadow-md transition-all hover:shadow-lg hover:shadow-primary/25"
+                      onClick={handleGenerateGuidelines}
+                      disabled={isGenerating || uploadedPdfs.length === 0}
+                      className="group/btn relative gap-2 overflow-hidden bg-gradient-to-r from-primary to-primary/80 px-5 shadow-md transition-all hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50"
                     >
-                      <Wand2 className="h-4 w-4 transition-transform group-hover/btn:rotate-12" />
-                      Generate Guideline
-                      <Sparkles className="h-3.5 w-3.5 opacity-70" />
+                      {isGenerating ? (
+                        <>
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="h-4 w-4 transition-transform group-hover/btn:rotate-12" />
+                          Generate Guideline
+                          <Sparkles className="h-3.5 w-3.5 opacity-70" />
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -271,6 +311,106 @@ export default function OnboardNewTenantManager() {
             </div>
           </CardContent>
         </Card>
+
+        {showResults && generatedRules.length > 0 && (
+          <Card className="overflow-hidden border-2 shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <CardContent className="p-6">
+              <div className="mb-6 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 text-emerald-600">
+                  <CheckCircle2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">Generated Underwriting Guidelines</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {generatedRules.length} rules extracted from uploaded documents
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {generatedRules.map((rule, idx) => {
+                  const isExpanded = expandedRules.has(idx);
+                  return (
+                    <div
+                      key={idx}
+                      className="rounded-xl border border-border/60 bg-card/50 overflow-hidden transition-all hover:border-border"
+                    >
+                      <button
+                        onClick={() => toggleRule(idx)}
+                        className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left group"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+                            <BookOpen className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-semibold text-sm text-foreground truncate">
+                                {rule.rule_name}
+                              </span>
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] font-semibold uppercase tracking-wider shrink-0 ${
+                                  rule.rule_type === "triage"
+                                    ? "border-amber-500/30 bg-amber-500/10 text-amber-600"
+                                    : "border-blue-500/30 bg-blue-500/10 text-blue-600"
+                                }`}
+                              >
+                                {rule.rule_type}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                              {rule.short_description}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-muted-foreground shrink-0 group-hover:text-foreground transition-colors">
+                          {isExpanded ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                        </div>
+                      </button>
+
+                      {isExpanded && (
+                        <div className="px-4 pb-4 space-y-4 border-t border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
+                          <div className="mt-3">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">
+                              Definition
+                            </label>
+                            <p className="text-sm text-foreground leading-relaxed">
+                              {rule.definition}
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">
+                              Short Description
+                            </label>
+                            <p className="text-sm text-foreground leading-relaxed">
+                              {rule.short_description}
+                            </p>
+                          </div>
+
+                          {rule.source_citation && (
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/40">
+                              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">Source:</span>
+                              <span className="text-xs font-medium text-foreground">
+                                {rule.source_citation.page_number}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
