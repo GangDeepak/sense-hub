@@ -36,13 +36,13 @@ export interface RuleThreshold {
 
 export interface Confidence {
   category: ConfidenceCategory;
-  score: number;
+  score: number | string;
   reason_and_steps_to_boost: string;
 }
 
 export interface RuleDescription {
   description: string;
-  threshold?: RuleThreshold[];
+  threshold?: RuleThreshold[] | string;
 }
 
 export interface GeneratedRule {
@@ -74,10 +74,31 @@ export interface Insights {
   confidenceData: { name: string; value: number }[];
 }
 
+export type GuidelineFilterKind = "rule_type" | "confidence_category" | "confidence_bucket";
+
+export interface GuidelineFilter {
+  kind: GuidelineFilterKind;
+  value: string;
+  label: string;
+}
+
+export interface RegeneratedRulesData {
+  base_rules: GeneratedRule[];
+  refined_rules: GeneratedRule[];
+}
+
+export const getConfidenceScore = (rule?: GeneratedRule | null) => {
+  const value = rule?.confidence?.score;
+  const score = typeof value === "string" ? parseFloat(value) : value;
+  return Number.isFinite(score) ? score || 0 : 0;
+};
+
 // Helper Functions
 export function computeInsights(rules: GeneratedRule[]): Insights {
   const totalRules = rules.length;
-  const avgConfidence = rules.reduce((sum, r) => sum + (r.confidence?.score || 0), 0) / totalRules;
+  const avgConfidence = totalRules > 0
+    ? rules.reduce((sum, r) => sum + getConfidenceScore(r), 0) / totalRules
+    : 0;
 
   // Confidence buckets
   const readyToIntegrate = rules.filter(r => r.confidence?.category === "full").length;
