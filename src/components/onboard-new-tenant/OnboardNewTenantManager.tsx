@@ -2,10 +2,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, FileText, Files, Sparkles, Trash2, CloudUpload as UploadCloud, Wand as Wand2, CircleCheck as CheckCircle2, BookOpen, X, FileSearch, Quote, Hash } from "lucide-react";
+import { Eye, FileText, Files, Sparkles, Trash2, CloudUpload as UploadCloud, Wand as Wand2, CircleCheck as CheckCircle2, BookOpen, X, FileSearch, Quote, Hash, Layers, ShieldCheck, AlertCircle } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import rulesData from "@/mock_data/onboard-guideline";
 import { SplitPanelWrapper, type DetailPanelConfig } from "@/components/grounding/SplitDetailPanel";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface UploadedPdf {
   file: File;
@@ -14,11 +15,28 @@ interface UploadedPdf {
   lob: string;
 }
 
+interface RuleThreshold {
+  [key: string]: string | string[] | number | undefined;
+}
+
+interface Confidence {
+  category: string;
+  score: number;
+  reason_and_steps_to_boost: string;
+}
+
+interface RuleDescription {
+  description: string;
+  threshold?: RuleThreshold[];
+}
+
 interface GeneratedRule {
   rule_name: string;
   rule_type: string;
   definition: string;
   short_description: string;
+  rule_description?: RuleDescription;
+  confidence?: Confidence;
   source_citation: {
     page_number: string;
   };
@@ -106,7 +124,7 @@ export default function OnboardNewTenantManager() {
 
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    setGeneratedRules(rulesData.rules);
+    setGeneratedRules(rulesData);
     setShowResults(true);
     setIsGenerating(false);
   };
@@ -439,7 +457,8 @@ export default function OnboardNewTenantManager() {
     body: (
       <div className="space-y-1 py-2 animate-in fade-in slide-in-from-right-4 duration-500">
         <div className="px-2 mb-4">
-          <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
+          {/* Rule Details Card */}
+          <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm mb-4">
             <div className="px-3 pt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 border-b border-border/40 pb-2 bg-secondary/20">
               <FileSearch size={12} className="text-primary" />
               Rule Details
@@ -513,6 +532,125 @@ export default function OnboardNewTenantManager() {
               )}
             </div>
           </div>
+
+          {/* Rule Description Card */}
+          {selectedRule.rule_description && (
+            <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm mb-4">
+              <div className="px-3 pt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 border-b border-border/40 pb-2 bg-secondary/20">
+                <Layers size={12} className="text-emerald-500" />
+                Rule Description
+              </div>
+              <div className="px-3 py-3">
+                <p className="text-sm text-foreground leading-relaxed">
+                  {selectedRule.rule_description.description}
+                </p>
+              </div>
+
+              {selectedRule.rule_description.threshold && selectedRule.rule_description.threshold.length > 0 && (
+                <div className="border-t border-border/40">
+                  <div className="px-3 pt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 border-b border-border/40 pb-2 bg-muted/30">
+                    <Layers size={12} className="text-muted-foreground" />
+                    Thresholds ({selectedRule.rule_description.threshold.length})
+                  </div>
+                  <ScrollArea className="max-h-[300px]">
+                    <div className="px-2 pb-2 space-y-2 pt-2">
+                      {selectedRule.rule_description.threshold.map((t, idx) => (
+                        <div key={idx} className="bg-muted/30 rounded-lg p-3 border border-border/40 text-xs">
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                            {Object.entries(t).map(([key, value]) => (
+                              <div key={key} className="col-span-2 sm:col-span-1">
+                                <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider block mb-0.5">
+                                  {key.replace(/_/g, ' ')}
+                                </span>
+                                {Array.isArray(value) ? (
+                                  <div className="flex flex-wrap gap-1">
+                                    {value.map((v, i) => (
+                                      <Badge key={i} variant="outline" className="text-[10px] font-normal">
+                                        {String(v)}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                ) : typeof value === 'string' ? (
+                                  <span className="text-foreground">{value}</span>
+                                ) : (
+                                  <span className="text-foreground">{String(value)}</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Confidence Card */}
+          {selectedRule.confidence && (
+            <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
+              <div className="px-3 pt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 border-b border-border/40 pb-2 bg-secondary/20">
+                <ShieldCheck size={12} className="text-sky-500" />
+                Confidence
+              </div>
+              <div className="px-2 pb-2">
+                <div className="py-3 border-b border-border/60">
+                  <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest block mb-1.5">
+                    Category
+                  </label>
+                  <Badge variant="outline" className="text-[10px] font-semibold capitalize">
+                    {selectedRule.confidence.category.replace(/_/g, ' ')}
+                  </Badge>
+                </div>
+
+                <div className="py-3 border-b border-border/60">
+                  <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest block mb-1.5">
+                    Score
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          selectedRule.confidence.score >= 0.9
+                            ? "bg-emerald-500"
+                            : selectedRule.confidence.score >= 0.7
+                            ? "bg-sky-500"
+                            : selectedRule.confidence.score >= 0.5
+                            ? "bg-amber-500"
+                            : "bg-destructive"
+                        }`}
+                        style={{ width: `${selectedRule.confidence.score * 100}%` }}
+                      />
+                    </div>
+                    <span className={`text-sm font-mono font-bold ${
+                      selectedRule.confidence.score >= 0.9
+                        ? "text-emerald-500"
+                        : selectedRule.confidence.score >= 0.7
+                        ? "text-sky-500"
+                        : selectedRule.confidence.score >= 0.5
+                        ? "text-amber-500"
+                        : "text-destructive"
+                    }`}>
+                      {(selectedRule.confidence.score * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                </div>
+
+                <div className="py-3">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <AlertCircle className="w-3 h-3 text-muted-foreground" />
+                    <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
+                      Steps to Boost Confidence
+                    </label>
+                  </div>
+                  <p className="text-sm text-foreground leading-relaxed">
+                    {selectedRule.confidence.reason_and_steps_to_boost}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     ),
