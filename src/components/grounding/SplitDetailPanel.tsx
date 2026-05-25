@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import { X, GripVertical, ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -64,44 +65,42 @@ export const SplitPanelWrapper = ({ listPane, detail, listPaneClassName = "overf
     };
   }, []);
 
-  if (!detail) {
-    return <div className={`flex-1 ${listPaneClassName}`}>{listPane}</div>;
-  }
-
   return (
-    <div ref={containerRef} className="flex flex-1 overflow-hidden bg-background" style={{ minHeight: 0 }}>
+    <div ref={containerRef} className="flex h-full overflow-hidden bg-background w-full" style={{ minHeight: 0 }}>
       {/* Left — list */}
-      <div className={`flex-1 min-w-0 ${listPaneClassName}`}>
+      <div className={cn("flex-1 min-w-0 h-full", listPaneClassName)}>
         {listPane}
       </div>
 
-      {/* Drag handle */}
-      <div
-        onMouseDown={onMouseDown}
-        className="flex-shrink-0 w-1.5 relative flex items-center justify-center cursor-col-resize group z-50 select-none touch-none"
-      >
-        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-primary/50 group-active:bg-primary transition-colors" />
-        <div className="relative z-10 flex items-center justify-center h-10 w-4 rounded-full bg-card border border-border group-hover:border-primary/50 group-hover:bg-secondary transition-all shadow-sm group-active:scale-95">
-          <GripVertical className="w-3 h-3 text-muted-foreground group-hover:text-foreground transition-colors" />
-        </div>
-      </div>
+      {detail && (
+        <>
+          {/* Drag handle */}
+          <div
+            onMouseDown={onMouseDown}
+            className="flex-shrink-0 w-1.5 relative flex items-center justify-center cursor-col-resize group z-50 select-none touch-none"
+          >
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border group-hover:bg-primary/50 group-active:bg-primary transition-colors" />
+            <div className="relative z-10 flex items-center justify-center h-10 w-4 rounded-full bg-card border border-border group-hover:border-primary/50 group-hover:bg-secondary transition-all shadow-sm group-active:scale-95">
+              <GripVertical className="w-3 h-3 text-muted-foreground group-hover:text-foreground transition-colors" />
+            </div>
+          </div>
 
-
-
-      {/* Right — detail panel */}
-      <div
-        className="flex-shrink-0 flex flex-col border-l border-border bg-card/60 backdrop-blur-md overflow-hidden shadow-[-8px_0_24px_-4px_rgba(0,0,0,0.15)] z-20 animate-in slide-in-from-right-16 fade-in duration-500 ease-out"
-        style={{ width: rightWidth }}
-      >
-        {/* Sticky header */}
-        <div className="flex-shrink-0 border-b border-border bg-card/40 backdrop-blur-sm sticky top-0 z-10">
-          {detail.header}
-        </div>
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto px-4 pb-6">
-          {detail.body}
-        </div>
-      </div>
+          {/* Right — detail panel */}
+          <div
+            className="flex-shrink-0 flex flex-col h-full border-l border-border bg-card/60 backdrop-blur-md overflow-hidden shadow-[-8px_0_24px_-4px_rgba(0,0,0,0.15)] z-20 animate-in slide-in-from-right-16 fade-in duration-500 ease-out"
+            style={{ width: rightWidth }}
+          >
+            {/* Sticky header */}
+            <div className="flex-shrink-0 border-b border-border bg-card/40 backdrop-blur-sm">
+              {detail.header}
+            </div>
+            {/* Scrollable body */}
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-10">
+              {detail.body}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -109,55 +108,51 @@ export const SplitPanelWrapper = ({ listPane, detail, listPaneClassName = "overf
 // ── Generic Field Renderer (re-exported for reuse) ────────────────────────────
 
 // ── Safe FieldBlock Component ─────────────────────────────────────────────────
+
+export const ValueOnlyBlock = ({ value }: { value: unknown }) => {
+  if (value === null || value === undefined) {
+    return <span className="text-muted-foreground italic text-xs">null</span>;
+  }
+
+  if (typeof value === "boolean") {
+    return <span className="text-green-400 font-mono text-xs">{String(value)}</span>;
+  }
+
+  if (typeof value === "number") {
+    return <span className="text-amber-400 font-mono text-xs">{value}</span>;
+  }
+
+  if (typeof value === "string") {
+    if (value.length <= 150 && !value.includes("\n")) {
+      return <span className="text-blue-300 font-mono text-xs break-all">{value}</span>;
+    }
+    return (
+      <pre className="bg-secondary/60 border border-border rounded-md p-3 font-mono text-xs text-foreground whitespace-pre-wrap break-words leading-relaxed mt-1 overflow-auto max-h-96">
+        {value}
+      </pre>
+    );
+  }
+
+  // For arrays and objects - use safe stringify
+  try {
+    const jsonString = JSON.stringify(value, null, 2);
+    return (
+      <pre className="bg-secondary/60 border border-border rounded-md p-3 font-mono text-xs text-foreground whitespace-pre-wrap break-words leading-relaxed mt-1 overflow-auto max-h-96">
+        {jsonString}
+      </pre>
+    );
+  } catch (err) {
+    // Fallback for circular references
+    return (
+      <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3 text-xs text-destructive/80 font-mono">
+        Unable to display data (circular reference or complex object)
+      </div>
+    );
+  }
+};
+
 export const FieldBlock = ({ label, value, defaultOpen = true }: { label: string; value: unknown; defaultOpen?: boolean }) => {
   const [open, setOpen] = useState(defaultOpen);
-
-  const isComplex =
-    (typeof value === "object" && value !== null) ||
-    (typeof value === "string" && (value.length > 150 || value.includes("\n")));
-
-  // Safe rendering function
-  const renderVal = (val: unknown): React.ReactNode => {
-    if (val === null || val === undefined) {
-      return <span className="text-muted-foreground italic text-xs">null</span>;
-    }
-
-    if (typeof val === "boolean") {
-      return <span className="text-green-400 font-mono text-xs">{String(val)}</span>;
-    }
-
-    if (typeof val === "number") {
-      return <span className="text-amber-400 font-mono text-xs">{val}</span>;
-    }
-
-    if (typeof val === "string") {
-      if (val.length <= 150 && !val.includes("\n")) {
-        return <span className="text-blue-300 font-mono text-xs break-all">{val}</span>;
-      }
-      return (
-        <pre className="bg-secondary/60 border border-border rounded-md p-3 font-mono text-xs text-foreground whitespace-pre-wrap break-words leading-relaxed mt-1 overflow-auto max-h-96">
-          {val}
-        </pre>
-      );
-    }
-
-    // For arrays and objects - use safe stringify
-    try {
-      const jsonString = JSON.stringify(val, null, 2);
-      return (
-        <pre className="bg-secondary/60 border border-border rounded-md p-3 font-mono text-xs text-foreground whitespace-pre-wrap break-words leading-relaxed mt-1 overflow-auto max-h-96">
-          {jsonString}
-        </pre>
-      );
-    } catch (err) {
-      // Fallback for circular references
-      return (
-        <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3 text-xs text-destructive/80 font-mono">
-          Unable to display data (circular reference or complex object)
-        </div>
-      );
-    }
-  };
 
   return (
     <div className="py-3 border-b border-border/60 last:border-0">
@@ -171,7 +166,7 @@ export const FieldBlock = ({ label, value, defaultOpen = true }: { label: string
         <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {open && <div className="mt-2 animate-in fade-in slide-in-from-top-2 duration-300 ease-out">{renderVal(value)}</div>}
+      {open && <div className="mt-2 animate-in fade-in slide-in-from-top-2 duration-300 ease-out"><ValueOnlyBlock value={value} /></div>}
     </div>
   );
 };

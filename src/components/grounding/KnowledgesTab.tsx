@@ -5,6 +5,7 @@ import type { KnowledgeRecord } from "./types";
 import { isEditable, apiUpdatePoint, apiDeletePoint, apiInsert } from "./types";
 import { SplitPanelWrapper, FieldBlock } from "./SplitDetailPanel";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface KnowledgesTabProps {
   knowledges: KnowledgeRecord[];
@@ -235,6 +236,7 @@ const KnowledgesTab = ({ knowledges: initialKnowledges, collection, loading, err
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const editable = isEditable(collection) && !!user?.edit_access;
 
@@ -311,9 +313,15 @@ const KnowledgesTab = ({ knowledges: initialKnowledges, collection, loading, err
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
             <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search name, description…" className="h-[30px] text-xs pl-8 w-[210px] bg-card" />
           </div>
-          <div className="w-px h-[22px] bg-border" />
+          <button 
+            onClick={() => navigate('/guideline-generation')}
+            className="inline-flex items-center gap-1.5 text-[11px] font-mono px-3.5 h-[30px] rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all duration-300 ml-1"
+          >
+            <BookOpen className="w-3.5 h-3.5" /> Add Guidelines
+          </button>
+          <div className="w-px h-[22px] bg-border mx-1" />
           <FilterDropdown label="Type" items={uniqueTypes} activeValue={activeType} onSelect={(v) => setActiveType(activeType === v ? null : v)} onClear={() => setActiveType(null)} colorClass="text-teal-400" />
-          <FilterDropdown label="API Tag" items={uniqueApiTags} activeValue={activeApi} onSelect={(v) => setActiveApi(activeApi === v ? null : v)} onClear={() => setActiveApi(null)} colorClass="text-purple-400" />
+          <FilterDropdown label="Knowledge DB Tag" items={uniqueApiTags} activeValue={activeApi} onSelect={(v) => setActiveApi(activeApi === v ? null : v)} onClear={() => setActiveApi(null)} colorClass="text-purple-400" />
           {editable && (
             <><div className="w-px h-[22px] bg-border/50 mx-1" />
             <button onClick={() => { setShowInsert(true); setSelectedId(null); }} className="inline-flex items-center gap-1.5 text-[11px] font-mono px-3.5 h-[32px] rounded-full border border-teal-400/30 bg-teal-400/10 text-teal-400 hover:bg-teal-400 hover:text-white hover:shadow-[0_0_15px_rgba(45,212,191,0.4)] transition-all duration-300">

@@ -18,6 +18,12 @@ export default defineConfig(({ mode }) => ({
         secure: false,
         rewrite: (path) => path.replace(/^\/proxy\/azure/, ''),
       },
+      '/proxy/suw-dev': {
+        target: 'https://suw-dev-backend-service-as.azurewebsites.net',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/proxy\/suw-dev/, ''),
+      },
     },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),

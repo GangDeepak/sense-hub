@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Play, Loader2 } from "lucide-react";
 import { getAuthHeaders } from "@/utils/token";
 
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 // ── In-memory cache ────────────────────────────────────────────────────────────
 const cache: Record<string, any> = {};
@@ -22,7 +22,7 @@ async function cachedFetch<T>(url: string): Promise<T> {
 function buildUserUrl(env: string, domains: string[]) {
   const params = new URLSearchParams({ env });
   domains.forEach((d) => params.append("tenant", `@${d}`));
-  return `${API_BASE}/users?${params.toString()}`;
+  return `${API_BASE}/api/users?${params.toString()}`;
 }
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -104,18 +104,17 @@ const MultiSelectDropdown = ({
   const displayText = loading
     ? "Loading…"
     : allChecked || selected.size === 0
-    ? "ALL"
-    : selected.size === 1
-    ? selectedLabels[0]
-    : `${selected.size} selected`;
+      ? "ALL"
+      : selected.size === 1
+        ? selectedLabels[0]
+        : `${selected.size} selected`;
 
   return (
     <div ref={ref} className="relative">
       <div
         onClick={() => !loading && setOpen((v) => !v)}
-        className={`flex items-center justify-between gap-2 rounded-md border border-border bg-secondary px-3 py-1.5 text-xs min-w-[180px] transition-colors ${
-          loading ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:border-primary"
-        }`}
+        className={`flex items-center justify-between gap-2 rounded-md border border-border bg-secondary px-3 py-1.5 text-xs min-w-[180px] transition-colors ${loading ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:border-primary"
+          }`}
       >
         <span className="truncate text-foreground/80">{displayText}</span>
         {loading ? (
@@ -163,7 +162,7 @@ const MultiSelectDropdown = ({
 const FilterBar = ({ onApply, initialFilters }: FilterBarProps) => {
   const [env, setEnv] = useState(initialFilters?.env || "dev");
   const [quickRange, setQuickRange] = useState(initialFilters?.quickRange || "");
-  
+
   // Helper to convert DD-MM-YYYY to YYYY-MM-DD for input[type=date]
   const toInputDate = (d?: string) => {
     if (!d) return "";
@@ -176,12 +175,12 @@ const FilterBar = ({ onApply, initialFilters }: FilterBarProps) => {
   const [endDate, setEndDate] = useState(toInputDate(initialFilters?.endDate) || new Date().toISOString().split("T")[0]);
 
   const [tenantOptions, setTenantOptions] = useState<Option[]>([]);
-  const [userOptions, setUserOptions]     = useState<Option[]>([]);
+  const [userOptions, setUserOptions] = useState<Option[]>([]);
   const [selectedTenants, setSelectedTenants] = useState<string[]>(initialFilters?.tenants ? initialFilters.tenants.split(",") : []);
-  const [selectedUsers,   setSelectedUsers]   = useState<string[]>(initialFilters?.users ? initialFilters.users.split(",") : []);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>(initialFilters?.users ? initialFilters.users.split(",") : []);
 
   const [tenantsLoading, setTenantsLoading] = useState(true);
-  const [usersLoading,   setUsersLoading]   = useState(true);
+  const [usersLoading, setUsersLoading] = useState(true);
 
   // ── fetchUsers helper ────────────────────────────────────────────────────────
   const fetchUsers = useCallback(async (currentEnv: string, domains: string[]) => {
@@ -204,7 +203,7 @@ const FilterBar = ({ onApply, initialFilters }: FilterBarProps) => {
     (async () => {
       try {
         const [tenantData, userData] = await Promise.all([
-          cachedFetch<Record<string, string>>(`${API_BASE}/tenants`),
+          cachedFetch<Record<string, string>>(`${API_BASE}/api/tenants`),
           cachedFetch<string[]>(buildUserUrl(env, [])),
         ]);
         if (cancelled) return;
@@ -218,7 +217,7 @@ const FilterBar = ({ onApply, initialFilters }: FilterBarProps) => {
       }
     })();
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Re-fetch users when env or tenant selection changes ──────────────────────
@@ -250,9 +249,9 @@ const FilterBar = ({ onApply, initialFilters }: FilterBarProps) => {
       env,
       quickRange,
       startDate: fmt(startDate),
-      endDate:   fmt(endDate),
+      endDate: fmt(endDate),
       tenants: (selectedTenants.length ? selectedTenants : tenantOptions.map((t) => t.value)).join(","),
-      users:   (selectedUsers.length   ? selectedUsers   : userOptions.map((u) => u.value)).join(","),
+      users: (selectedUsers.length ? selectedUsers : userOptions.map((u) => u.value)).join(","),
     });
   };
 

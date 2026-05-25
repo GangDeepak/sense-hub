@@ -10,8 +10,8 @@ import KnowledgesTab from "./KnowledgesTab";
 
 const GroundingModule = () => {
   const [activeTab, setActiveTab] = useState<"overview" | "queries" | "knowledges">("overview");
-  const [queryCollection, setQueryCollection] = useState("query_memory");
-  const [knowledgeCollection, setKnowledgeCollection] = useState("knowledge_memory");
+  const [queryCollection, setQueryCollection] = useState("query_memory_db");
+  const [knowledgeCollection, setKnowledgeCollection] = useState("knowledge_memory_db");
 
   const [queries, setQueries] = useState<QueryRecord[]>([]);
   const [knowledges, setKnowledges] = useState<KnowledgeRecord[]>([]);
@@ -77,9 +77,19 @@ const GroundingModule = () => {
     if (activeTab === "knowledges") {
       setKnowledgeCollection(val);
       loadKnowledges(val);
+    } else if (activeTab === "queries") {
+      setQueryCollection(val);
+      loadQueries(val);
     } else {
       setQueryCollection(val);
       loadQueries(val);
+      // Try to sync knowledge collection based on suffix
+      const suffix = val.startsWith("query_memory") ? val.replace("query_memory", "") : "";
+      const kCol = `knowledge_memory${suffix}`;
+      if (KNOWLEDGE_COLLECTIONS.includes(kCol)) {
+        setKnowledgeCollection(kCol);
+        loadKnowledges(kCol);
+      }
     }
   };
 
@@ -121,27 +131,25 @@ const GroundingModule = () => {
         ))}
         <div className="flex-1" />
 
-        {activeTab !== "overview" && (
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Collection</span>
-            <Select value={currentCollection} onValueChange={handleCollectionChange}>
-              <SelectTrigger className="h-[26px] text-[11px] font-mono min-w-[160px] bg-secondary">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {currentCollections.map((c) => (
-                  <SelectItem key={c} value={c} className="text-[11px] font-mono">{c}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <button
-              onClick={handleReload}
-              className="flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground bg-secondary border border-border rounded px-2.5 h-[26px] hover:text-foreground transition-colors"
-            >
-              <RefreshCw className="w-3 h-3" /> Reload
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Collection</span>
+          <Select value={currentCollection} onValueChange={handleCollectionChange}>
+            <SelectTrigger className="h-[26px] text-[11px] font-mono min-w-[160px] bg-secondary">
+              <SelectValue placeholder="Select collection..." />
+            </SelectTrigger>
+            <SelectContent>
+              {currentCollections.map((c) => (
+                <SelectItem key={c} value={c} className="text-[11px] font-mono">{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <button
+            onClick={handleReload}
+            className="flex items-center gap-1.5 text-[11px] font-mono text-muted-foreground bg-secondary border border-border rounded px-2.5 h-[26px] hover:text-foreground transition-colors"
+          >
+            <RefreshCw className="w-3 h-3" /> Reload
+          </button>
+        </div>
       </div>
 
       {/* Tab content */}

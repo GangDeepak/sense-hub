@@ -1,7 +1,7 @@
-import { Home, BarChart3, BookOpen, LogOut, MessageSquare, Shield, History, Trash2, Sparkles, Database } from "lucide-react";
+import { Home, BarChart3, BookOpen, LogOut, MessageSquare, Shield, History, Trash2, Sparkles, Database, Search, Loader2, FileText, Building2 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { UserRole } from "@/contexts/AuthContext";
+import { UserPermissions, UserRole } from "@/contexts/AuthContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -31,18 +31,27 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useGradioDemoSafe } from "@/hooks/useGradioDemoSafe";
-import { INSURED_LIST } from "@/contexts/GradioDemoContext";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
-const allItems: { title: string; url: string; icon: typeof Home; roles: UserRole[] }[] = [
+type SidebarItem = {
+  title: string;
+  url: string;
+  icon: typeof Home;
+  roles: UserRole[];
+  permission?: keyof UserPermissions;
+};
+
+const allItems: SidebarItem[] = [
   { title: "Home", url: "/", icon: Home, roles: ["user", "admin"] },
-  { title: "Chat Analytics", url: "/chat-analytics", icon: BarChart3, roles: ["user"] },
-  { title: "Grounding Module", url: "/grounding-module", icon: BookOpen, roles: ["user"] },
-  { title: "API Data", url: "/api-data", icon: Database, roles: ["user", "admin"] },
-  { title: "Prompts", url: "/prompts", icon: Sparkles, roles: ["user", "admin"] },
-  { title: "Gradio Demo", url: "/gradio-demo", icon: MessageSquare, roles: ["user"] },
+  { title: "Chat Analytics", url: "/chat-analytics", icon: BarChart3, roles: ["user"], permission: "chat_analytics" },
+  { title: "Grounding Module", url: "/grounding-module", icon: BookOpen, roles: ["user"], permission: "grounding_module" },
+  { title: "Tools Management", url: "/api-data", icon: Database, roles: ["user", "admin"], permission: "api_data" },
+  { title: "Onboard New Tenant", url: "/onboard-new-tenant", icon: Building2, roles: ["user", "admin"] },
+  { title: "Prompts Library", url: "/prompts", icon: Sparkles, roles: ["user", "admin"], permission: "prompts" },
+  { title: "Chat", url: "/chat", icon: MessageSquare, roles: ["user"], permission: "chat" }
 ];
 
 function getInitials(name: string) {
@@ -58,12 +67,17 @@ export function AppSidebar() {
   const { user, isAuthenticated, logout } = useAuth();
   const gradio = useGradioDemoSafe();
 
-  const isOnGradio = location.pathname === "/gradio-demo";
+  const isOnGradio = location.pathname === "/chat";
   const sessions = gradio?.sessions || [];
+  const insuredList = gradio?.insuredList || [];
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const items = allItems.filter(
-    (item) => !isAuthenticated || item.roles.includes(user!.role)
-  );
+  const items = allItems.filter((item) => {
+    if (!isAuthenticated) return true;
+    if (!item.roles.includes(user!.role)) return false;
+    if (!item.permission) return true;
+    return user?.permissions?.[item.permission] === "allowed";
+  });
 
   const fetchSessions = async () => {
     if (!user?.email) return [];
@@ -83,7 +97,7 @@ export function AppSidebar() {
         gradio.setSessions(list);
 
         // Auto-select latest session if none is active
-        if (!gradio.sessionId && list.length > 0) {
+        if ((!gradio.sessionId || gradio.sessionId === "default_session") && list.length > 0) {
           gradio.setSessionId(list[0].session_uuid);
         }
       } catch {
@@ -91,8 +105,7 @@ export function AppSidebar() {
       }
     })();
     // Intentionally only dependent on page location; avoid refetch loops.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnGradio]);
+  }, [isOnGradio, user?.email]);
 
   return (
     <Sidebar collapsible="icon">
@@ -164,23 +177,47 @@ export function AppSidebar() {
               Select Insured Name
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <div className="px-2 pb-2">
+              <div className="px-2 pb-2 space-y-2">
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Search name, account, policy..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 h-8 text-xs bg-secondary/50 border-none focus-visible:ring-1 focus-visible:ring-primary/30"
+                  />
+                </div>
                 <Select
                   value={gradio.selectedInsured?.ref_id || ""}
                   onValueChange={(val) => {
-                    const found = INSURED_LIST.find((i) => i.ref_id === val);
+                    const found = insuredList.find((i) => i.ref_id === val);
                     gradio.setSelectedInsured(found || null);
                   }}
                 >
                   <SelectTrigger className="w-full text-xs h-8">
-                    <SelectValue placeholder="Choose insured..." />
+                    <SelectValue placeholder={gradio.isLoadingInsureds ? "Loading..." : "Choose insured..."} />
                   </SelectTrigger>
                   <SelectContent>
-                    {INSURED_LIST.map((item) => (
-                      <SelectItem key={item.ref_id} value={item.ref_id} className="text-xs">
-                        {item.insured_name}
-                      </SelectItem>
-                    ))}
+                    {gradio.isLoadingInsureds && (
+                      <div className="flex items-center justify-center p-4">
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      </div>
+                    )}
+                    {insuredList
+                      .filter((item) => {
+                        if (item.ref_id === "landing_page") return true;
+                        const term = searchTerm.toLowerCase();
+                        return (
+                          (item.insured_name && item.insured_name.toLowerCase().includes(term)) ||
+                          (item.account_number && item.account_number.toLowerCase().includes(term)) ||
+                          (item.policy_number && item.policy_number.toLowerCase().includes(term))
+                        );
+                      })
+                      .map((item) => (
+                        <SelectItem key={item.ref_id} value={item.ref_id} className="text-xs">
+                          {item.insured_name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>

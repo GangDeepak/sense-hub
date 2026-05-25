@@ -3,12 +3,23 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { clearAccessToken, getAccessToken, getAuthHeaders, setAccessToken } from "@/utils/token";
 
 export type UserRole = "user" | "admin";
+export type AccessState = "allowed" | "not_allowed";
+
+export interface UserPermissions {
+  edit_access?: AccessState;
+  chat_analytics?: AccessState;
+  grounding_module?: AccessState;
+  chat?: AccessState;
+  prompts?: AccessState;
+  api_data?: AccessState;
+}
 
 export interface AuthUser {
   email: string;
   name: string;
   role: UserRole;
   edit_access?: boolean;
+  permissions?: UserPermissions;
 }
 
 interface AuthContextType {
@@ -22,12 +33,28 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
+const PERMISSIONS_STORAGE_KEY = "sense_permissions";
 
 type MeJwtPayload = {
   sub: string; // user email
   role: UserRole;
   exp?: number;
 };
+
+function toAccessState(value: unknown): AccessState {
+  if (value === "allowed" || value === true) return "allowed";
+  return "not_allowed";
+}
+
+function getStoredPermissions(): UserPermissions {
+  const raw = localStorage.getItem(PERMISSIONS_STORAGE_KEY);
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) as UserPermissions;
+  } catch {
+    return {};
+  }
+}
 
 async function fetchMe(): Promise<AuthUser> {
   const res = await fetch(`${API_BASE}/auth/me`, { headers: getAuthHeaders() });
@@ -42,8 +69,9 @@ async function fetchMe(): Promise<AuthUser> {
   if (!payload?.sub || !payload.role) throw new Error("Invalid /auth/me response");
 
   const name = payload.sub.includes("@") ? payload.sub.split("@")[0] : payload.sub;
-  const edit_access = localStorage.getItem("sense_edit_access") === "true";
-  return { email: payload.sub, name, role: payload.role, edit_access };
+  const permissions = getStoredPermissions();
+  const edit_access = permissions.edit_access === "allowed";
+  return { email: payload.sub, name, role: payload.role, edit_access, permissions };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -90,12 +118,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: text || "Login failed" };
       }
 
-      const json = (await res.json()) as { access_token?: string; token_type?: string; edit_access?: boolean };
+      const json = (await res.json()) as {
+        access_token?: string;
+        token_type?: string;
+        edit_access?: boolean | AccessState;
+        chat_analytics?: AccessState;
+        grounding_module?: AccessState;
+        chat?: AccessState;
+        prompts?: AccessState;
+        api_data?: AccessState;
+      };
       const token = json.access_token;
       if (!token) return { success: false, error: "Missing access token" };
 
       setAccessToken(token);
-      localStorage.setItem("sense_edit_access", String(!!json.edit_access));
+      const permissions: UserPermissions = {
+        edit_access: toAccessState(json.edit_access),
+        chat_analytics: toAccessState(json.chat_analytics),
+        grounding_module: toAccessState(json.grounding_module),
+        chat: toAccessState(json.chat),
+        prompts: toAccessState(json.prompts),
+        api_data: toAccessState(json.api_data),
+      };
+      localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(permissions));
       const me = await fetchMe();
       setUser(me);
       return { success: true };
@@ -109,7 +154,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     clearAccessToken();
-    localStorage.removeItem("sense_edit_access");
+    localStorage.removeItem(PERMISSIONS_STORAGE_KEY);
+
+    // Clear persisted Guideline Generation session data on logout
+    Object.keys(localStorage)
+      .filter((key) => key.startsWith("gg_"))
+      .forEach((key) => localStorage.removeItem(key));
+
     setUser(null);
     setIsLoading(false);
   };

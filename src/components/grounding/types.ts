@@ -2,8 +2,8 @@ import { getAuthHeaders } from "@/utils/token";
 
 export const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-export const QUERY_COLLECTIONS = ["query_memory", "query_memory_dev", "query_memory_prod"];
-export const KNOWLEDGE_COLLECTIONS = ["knowledge_memory", "knowledge_memory_dev", "knowledge_memory_prod"];
+export const QUERY_COLLECTIONS = ["query_memory", "query_memory_dev", "query_memory_prod", "query_memory_test", "query_memory_db"];
+export const KNOWLEDGE_COLLECTIONS = ["knowledge_memory", "knowledge_memory_dev", "knowledge_memory_prod", "knowledge_memory_test", "knowledge_memory_db"];
 
 // Collections where edit/insert is allowed
 export const EDITABLE_COLLECTIONS = [
@@ -11,6 +11,8 @@ export const EDITABLE_COLLECTIONS = [
   "query_memory_dev",
   "knowledge_memory",
   "knowledge_memory_dev",
+  "query_memory_db",
+  "knowledge_memory_db"
 ];
 
 export function isEditable(collection: string): boolean {

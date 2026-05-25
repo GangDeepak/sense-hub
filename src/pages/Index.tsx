@@ -83,7 +83,7 @@ export default function Index() {
           </p>
           <div className="flex flex-wrap gap-4">
             <Link
-              to="/gradio-demo"
+              to="/chat"
               className="inline-flex items-center gap-2 bg-foreground text-background px-6 py-3 rounded-full font-medium hover:opacity-90 transition-opacity shadow-lg group"
             >
               Try Sense Demo
