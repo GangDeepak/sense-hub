@@ -2,15 +2,26 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, FileText, Files, Sparkles, Trash2, CloudUpload as UploadCloud, Wand as Wand2, CircleCheck as CheckCircle2, ChevronDown, ChevronUp, BookOpen } from "lucide-react";
+import { Eye, FileText, Files, Sparkles, Trash2, CloudUpload as UploadCloud, Wand as Wand2, CircleCheck as CheckCircle2, BookOpen, X, FileSearch, Quote, Hash } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import rulesData from "@/mock_data/onboard-guideline";
+import { SplitPanelWrapper, type DetailPanelConfig } from "@/components/grounding/SplitDetailPanel";
 
 interface UploadedPdf {
   file: File;
   url: string;
   domain: string;
   lob: string;
+}
+
+interface GeneratedRule {
+  rule_name: string;
+  rule_type: string;
+  definition: string;
+  short_description: string;
+  source_citation: {
+    page_number: string;
+  };
 }
 
 const DOMAIN_OPTIONS = ["Underwriting", "Claims"];
@@ -28,9 +39,9 @@ export default function OnboardNewTenantManager() {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedPdfs, setUploadedPdfs] = useState<UploadedPdf[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedRules, setGeneratedRules] = useState<typeof rulesData.rules>([]);
+  const [generatedRules, setGeneratedRules] = useState<GeneratedRule[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [expandedRules, setExpandedRules] = useState<Set<number>>(new Set());
+  const [selectedRuleIndex, setSelectedRuleIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadedPdfsRef = useRef<UploadedPdf[]>([]);
 
@@ -91,6 +102,7 @@ export default function OnboardNewTenantManager() {
     setIsGenerating(true);
     setShowResults(false);
     setGeneratedRules([]);
+    setSelectedRuleIndex(null);
 
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
@@ -99,19 +111,16 @@ export default function OnboardNewTenantManager() {
     setIsGenerating(false);
   };
 
-  const toggleRule = (index: number) => {
-    setExpandedRules((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
-      }
-      return next;
-    });
+  const handleRuleClick = (index: number) => {
+    setSelectedRuleIndex(selectedRuleIndex === index ? null : index);
   };
 
-  return (
+  const selectedRule = useMemo(() => {
+    if (selectedRuleIndex === null || !generatedRules[selectedRuleIndex]) return null;
+    return generatedRules[selectedRuleIndex];
+  }, [selectedRuleIndex, generatedRules]);
+
+  const listPaneContent = (
     <div className="h-full overflow-y-auto bg-gradient-to-br from-background via-background to-muted/30 p-6">
       <div className="mx-auto w-full max-w-5xl space-y-6">
         <div className="flex items-start justify-between gap-4">
@@ -329,23 +338,31 @@ export default function OnboardNewTenantManager() {
 
               <div className="space-y-3">
                 {generatedRules.map((rule, idx) => {
-                  const isExpanded = expandedRules.has(idx);
+                  const isSelected = selectedRuleIndex === idx;
                   return (
                     <div
                       key={idx}
-                      className="rounded-xl border border-border/60 bg-card/50 overflow-hidden transition-all hover:border-border"
+                      onClick={() => handleRuleClick(idx)}
+                      className={`rounded-xl border bg-card/50 overflow-hidden transition-all cursor-pointer group ${
+                        isSelected
+                          ? "border-primary/50 bg-primary/5 shadow-md ring-1 ring-primary/20"
+                          : "border-border/60 hover:border-primary/30 hover:shadow-sm"
+                      }`}
                     >
-                      <button
-                        onClick={() => toggleRule(idx)}
-                        className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left group"
-                      >
+                      <div className="flex items-center justify-between gap-3 px-4 py-3.5">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+                          <div className={`flex h-9 w-9 items-center justify-center rounded-lg shrink-0 transition-colors ${
+                            isSelected
+                              ? "bg-primary/20 text-primary"
+                              : "bg-primary/10 text-primary group-hover:bg-primary/15"
+                          }`}>
                             <BookOpen className="h-4 w-4" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-semibold text-sm text-foreground truncate">
+                              <span className={`font-semibold text-sm truncate transition-colors ${
+                                isSelected ? "text-primary" : "text-foreground"
+                              }`}>
                                 {rule.rule_name}
                               </span>
                               <Badge
@@ -364,46 +381,10 @@ export default function OnboardNewTenantManager() {
                             </p>
                           </div>
                         </div>
-                        <div className="text-muted-foreground shrink-0 group-hover:text-foreground transition-colors">
-                          {isExpanded ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
+                        <div className="text-muted-foreground shrink-0 text-xs">
+                          Click to view
                         </div>
-                      </button>
-
-                      {isExpanded && (
-                        <div className="px-4 pb-4 space-y-4 border-t border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
-                          <div className="mt-3">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">
-                              Definition
-                            </label>
-                            <p className="text-sm text-foreground leading-relaxed">
-                              {rule.definition}
-                            </p>
-                          </div>
-
-                          <div>
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">
-                              Short Description
-                            </label>
-                            <p className="text-sm text-foreground leading-relaxed">
-                              {rule.short_description}
-                            </p>
-                          </div>
-
-                          {rule.source_citation && (
-                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/40">
-                              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">Source:</span>
-                              <span className="text-xs font-medium text-foreground">
-                                {rule.source_citation.page_number}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      </div>
                     </div>
                   );
                 })}
@@ -413,5 +394,135 @@ export default function OnboardNewTenantManager() {
         )}
       </div>
     </div>
+  );
+
+  const detail: DetailPanelConfig | null = selectedRule ? {
+    header: (
+      <div className="flex items-start gap-3 px-5 py-3.5 relative overflow-hidden bg-card border-b border-border shadow-sm">
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 blur-3xl rounded-full pointer-events-none" />
+
+        <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex flex-shrink-0 items-center justify-center text-primary mt-0.5 relative z-10">
+          <BookOpen size={16} />
+        </div>
+
+        <div className="flex-1 min-w-0 relative z-10">
+          <div className="flex items-center flex-wrap gap-2 mb-1.5">
+            <span className="font-mono font-bold text-primary uppercase tracking-wider text-xs">
+              Rule #{(selectedRuleIndex ?? 0) + 1}
+            </span>
+            <Badge
+              variant="outline"
+              className={`text-[10px] font-semibold uppercase tracking-wider ${
+                selectedRule.rule_type === "triage"
+                  ? "border-amber-500/30 bg-amber-500/10 text-amber-600"
+                  : "border-blue-500/30 bg-blue-500/10 text-blue-600"
+              }`}
+            >
+              {selectedRule.rule_type}
+            </Badge>
+          </div>
+          <p className="text-[14px] font-semibold text-foreground leading-snug break-words pr-6">
+            {selectedRule.rule_name}
+          </p>
+        </div>
+
+        <button
+          onClick={() => setSelectedRuleIndex(null)}
+          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors group bg-background/50 border border-border/50 shadow-sm flex-shrink-0 relative z-10"
+          title="Close panel"
+        >
+          <X className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+        </button>
+      </div>
+    ),
+    body: (
+      <div className="space-y-1 py-2 animate-in fade-in slide-in-from-right-4 duration-500">
+        <div className="px-2 mb-4">
+          <div className="bg-card border border-border/60 rounded-xl overflow-hidden shadow-sm">
+            <div className="px-3 pt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 border-b border-border/40 pb-2 bg-secondary/20">
+              <FileSearch size={12} className="text-primary" />
+              Rule Details
+            </div>
+            <div className="px-2 pb-2">
+              <div className="py-3 border-b border-border/60">
+                <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest block mb-1.5">
+                  Rule Name
+                </label>
+                <p className="text-sm text-foreground font-medium">
+                  {selectedRule.rule_name}
+                </p>
+              </div>
+
+              <div className="py-3 border-b border-border/60">
+                <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest block mb-1.5">
+                  Rule Type
+                </label>
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] font-semibold uppercase tracking-wider ${
+                    selectedRule.rule_type === "triage"
+                      ? "border-amber-500/30 bg-amber-500/10 text-amber-600"
+                      : "border-blue-500/30 bg-blue-500/10 text-blue-600"
+                  }`}
+                >
+                  {selectedRule.rule_type}
+                </Badge>
+              </div>
+
+              <div className="py-3 border-b border-border/60">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Quote className="w-3 h-3 text-muted-foreground" />
+                  <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
+                    Definition
+                  </label>
+                </div>
+                <p className="text-sm text-foreground leading-relaxed">
+                  {selectedRule.definition}
+                </p>
+              </div>
+
+              <div className="py-3 border-b border-border/60">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <FileText className="w-3 h-3 text-muted-foreground" />
+                  <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
+                    Short Description
+                  </label>
+                </div>
+                <p className="text-sm text-foreground leading-relaxed">
+                  {selectedRule.short_description}
+                </p>
+              </div>
+
+              {selectedRule.source_citation && (
+                <div className="py-3">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Hash className="w-3 h-3 text-muted-foreground" />
+                    <label className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">
+                      Source Citation
+                    </label>
+                  </div>
+                  <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 border border-border/40">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Page:</span>
+                    <span className="text-xs font-medium text-foreground">
+                      {selectedRule.source_citation.page_number}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+  } : null;
+
+  return (
+    <SplitPanelWrapper
+      listPane={listPaneContent}
+      detail={detail}
+      listPaneClassName="overflow-y-auto"
+    />
   );
 }
